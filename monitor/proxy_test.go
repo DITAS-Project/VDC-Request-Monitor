@@ -25,6 +25,8 @@ import (
 	"regexp"
 	"testing"
 
+	jwt "github.com/dgrijalva/jwt-go"
+
 	spec "github.com/DITAS-Project/blueprint-go"
 )
 
@@ -42,6 +44,18 @@ func TestRequestMonitor_extractOperationId(t *testing.T) {
 
 	test(t, blueprint, testData)
 
+}
+
+func TestTokenParsing(t *testing.T) {
+	rawToken := `eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ1Mm43MW1jQWRIaDBxMS12QzJYMHVYX1lmZzNjY0VtaDJxT2hObTgwSGdRIn0.eyJqdGkiOiIzYTI0MmMyMS1lMDliLTRlOTgtYWMwOC1lNjJlNjRkOGVkZDkiLCJleHAiOjE1NDc2NTU2MDcsIm5iZiI6MCwiaWF0IjoxNTQ3NjU1MzA3LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvdmRjX2R1bW15IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjI0OTY2NDI0LTEzMjQtNDdmMy1hNTNlLTM2ZmQzMmJiMjZlMCIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3RfY2xpZW50IiwiYXV0aF90aW1lIjowLCJzZXNzaW9uX3N0YXRlIjoiMmFmNDVkY2MtNDU4Ny00MWQ4LWFjZGUtM2ZlMjg1MzNmZTJjIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkb2N0b3IiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3RfZG9jdG9yIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJmYW1pbHlfbmFtZSI6IkRvZSJ9.jKEPmwvCK3E46w5hwBr8WEQDcM1oMlmSmjO4anpx5fdMwk2TS7YgDFfqzzmZqOSeKt8Lw5L5VFGXB83rTf1AOOYy4rfKeImgH_3k_uvh31_dUzpg-7H4Tnwi0eiZiVJGE2iK3QoYCZdN8XmQltO9bvAEucvizb9cG2UnBcK8pCzqLzEfIxeE9oZHwrTo20s6SRGzY1vo96DwSG4weur3iJMpv4aSHjlQNXRbH3yTepucK6PxCoFNO8R7gxg7Ak4DVpA5gOJa5MM3V7U_ereT5xTNcrhYRq_a1B4Ey9tJvcr5Ud2HM1Y6myRKKpOyXxM-OJLggzOuL2eDv5EkRgexBQ`
+	token, err := jwt.Parse(rawToken, GetKey)
+	if err != nil {
+		t.Fatalf("could not prepare test %+v", err)
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	for key, value := range claims {
+		t.Logf("%s\t%v\n", key, value)
+	}
 }
 
 func BenchmarkRequestMonitor_extractOperationId(b *testing.B) {

@@ -20,12 +20,20 @@ package monitor
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/lestrrat/go-jwx/jwk"
+
 	opentracing "github.com/opentracing/opentracing-go"
 )
+
+const tokenString = `eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ1Mm43MW1jQWRIaDBxMS12QzJYMHVYX1lmZzNjY0VtaDJxT2hObTgwSGdRIn0.eyJqdGkiOiJkZDE1MGQ5OC02ZjBkLTQ2NjctODYwNi1lMzdhYWQzYzhlYzciLCJleHAiOjE1NDc2Mzg4OTEsIm5iZiI6MCwiaWF0IjoxNTQ3NjM4NTkxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvdmRjX2R1bW15IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjI0OTY2NDI0LTEzMjQtNDdmMy1hNTNlLTM2ZmQzMmJiMjZlMCIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3RfY2xpZW50IiwiYXV0aF90aW1lIjowLCJzZXNzaW9uX3N0YXRlIjoiYzk4YzUxZTUtZDc1OC00YTkyLWFlYTctNjY4MzJjZGFmOWYzIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkb2N0b3IiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3RfZG9jdG9yIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJmYW1pbHlfbmFtZSI6IkRvZSJ9.SCbhNcyLEMNSroSSGakgjp6QDNc7Jo9cRt5Rn8-LMWLhFl_4-WqlpX27MOYj0FR_MEYpfGkOUA5YbnjdI-0ViPd94-2K_pFr9NrEv6G5numoUHUdI0aVYeQunV0sl2URYGof__eYc-Bk3b9xzA7ZecLELe7t5duDO9NHpX6nNx39XJx2Ep6Trpfd2K6t2qgz6U8Icucy8YqfbBW7gjY6X3NcR1B1PvNTHDE9kTO6fJziDWRtZ8eGY86MtzwSlZUmDWexEgH8aghPHUohXVOe_Lg30NRHDfC8ppZd8dtoRo2urZLEYUllOKaT4Dr_NCFDWxJeFt0vDF9rBW1WQd3jpg`
+const jwksURL = `http://localhost:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs`
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	var requestID = mon.generateRequestID(req.RemoteAddr)
@@ -69,6 +77,19 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	req.Header.Set("X-DITAS-RequestID", requestID)
 	req.Header.Set("X-DITAS-OperationID", operationID)
 
+	//validate Token
+	token, err := jwt.Parse(tokenString, GetKey)
+	if err != nil {
+
+		http.Error(w, "invalid Token", http.StatusBadRequest)
+		return
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	for key, value := range claims {
+		fmt.Printf("%s\t%v\n", key, value)
+	}
+
 	//forward the request
 	start := time.Now()
 	mon.oxy.ServeHTTP(w, req)
@@ -97,6 +118,24 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 
 		mon.forward(requestID, exchange)
 	}
+}
+func GetKey(token *jwt.Token) (interface{}, error) {
+
+	set, err := jwk.FetchHTTP(jwksURL)
+	if err != nil {
+		return nil, err
+	}
+
+	keyID, ok := token.Header["kid"].(string)
+	if !ok {
+		return nil, errors.New("expecting JWT header to have string kid")
+	}
+
+	if key := set.LookupKeyID(keyID); len(key) == 1 {
+		return key[0].Materialize()
+	}
+
+	return nil, errors.New("unable to find key")
 }
 
 func (mon *RequestMonitor) extractOperationId(path string, method string) string {

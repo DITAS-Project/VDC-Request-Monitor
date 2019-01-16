@@ -45,6 +45,8 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
+
+	
 }
 
 type MeterMessage struct {
