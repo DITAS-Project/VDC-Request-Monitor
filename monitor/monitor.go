@@ -67,6 +67,8 @@ type RequestMonitor struct {
 	exporter exchangeReporter
 
 	cache ResouceCache
+
+	iam *iam
 }
 
 //NewManger Creates a new logging, tracing RequestMonitor
@@ -90,6 +92,7 @@ func NewManger() (*RequestMonitor, error) {
 		monitorQueue:  make(chan MeterMessage, 10),
 		exchangeQueue: make(chan exchangeMessage, 10),
 		cache:         NewResoruceCache(blueprint),
+		iam:           NewIAM(configuration),
 	}
 
 	err = mng.initTracing()
@@ -97,12 +100,13 @@ func NewManger() (*RequestMonitor, error) {
 		log.Errorf("failed to init tracer %+v", err)
 	}
 
+	//initilize proxy
 	fwd, err := forward.New(
-		forward.Stream(true),
-		forward.PassHostHeader(true),
-		forward.ErrorHandler(utils.ErrorHandlerFunc(handleError)),
-		forward.StateListener(forward.UrlForwardingStateListener(stateListener)),
-		forward.ResponseModifier(mng.responseInterceptor),
+		forward.Stream(true),                                                     //allow for streaming
+		forward.PassHostHeader(true),                                             //allow for headers to pass
+		forward.ErrorHandler(utils.ErrorHandlerFunc(handleError)),                //use a custom error function
+		forward.StateListener(forward.UrlForwardingStateListener(stateListener)), //log state changes of the lib
+		forward.ResponseModifier(mng.responseInterceptor),                        //we want to observe resposnes
 	)
 
 	if err != nil {

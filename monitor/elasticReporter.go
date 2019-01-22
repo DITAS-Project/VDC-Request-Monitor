@@ -42,29 +42,41 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (elasticR
 	util.SetLogger(logger)
 	util.SetLog(log)
 
-	util.WaitForAvailible(config.ElasticSearchURL, nil)
+	if !config.IgnoreElastic {
+		util.WaitForAvailible(config.ElasticSearchURL, nil)
 
-	client, err := elastic.NewClient(
-		elastic.SetURL(config.ElasticSearchURL),
-		elastic.SetSniff(false),
-	)
+		client, err := elastic.NewClient(
+			elastic.SetURL(config.ElasticSearchURL),
+			elastic.SetSniff(false),
+		)
 
-	log.Debugf("using %s as ES endpoint", config.ElasticSearchURL)
+		log.Debugf("using %s as ES endpoint", config.ElasticSearchURL)
 
-	if err != nil {
-		log.Error("failed to connect to elastic serach", err)
-		return elasticReporter{}, err
+		if err != nil {
+			log.Error("failed to connect to elastic serach", err)
+			return elasticReporter{}, err
+		}
+
+		reporter := elasticReporter{
+			Queue:    queue,
+			Client:   client,
+			VDCName:  config.VDCName,
+			QuitChan: make(chan bool),
+			ctx:      context.Background(),
+		}
+
+		return reporter, nil
+	} else {
+		reporter := elasticReporter{
+			Queue:    queue,
+			VDCName:  config.VDCName,
+			QuitChan: make(chan bool),
+			ctx:      context.Background(),
+		}
+
+		return reporter, nil
 	}
 
-	reporter := elasticReporter{
-		Queue:    queue,
-		Client:   client,
-		VDCName:  config.VDCName,
-		QuitChan: make(chan bool),
-		ctx:      context.Background(),
-	}
-
-	return reporter, nil
 }
 
 //Start creates a new worker process and waits for meterMessages
@@ -80,12 +92,14 @@ func (er *elasticReporter) Start() {
 
 				work.Timestamp = time.Now()
 
-				_, err := er.Client.Index().Index(er.getElasticIndex()).Type("data").BodyJson(work).Do(er.ctx)
+				if er.Client != nil {
+					_, err := er.Client.Index().Index(er.getElasticIndex()).Type("data").BodyJson(work).Do(er.ctx)
 
-				if err != nil {
-					log.Debug("failed to report mesurement to", err)
-				} else {
-					log.Debug("reported data to elastic!")
+					if err != nil {
+						log.Debug("failed to report mesurement to", err)
+					} else {
+						log.Debug("reported data to elastic!")
+					}
 				}
 
 			case <-er.QuitChan:

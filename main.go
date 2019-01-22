@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func main() {
+func setup_viper() {
 	viper.SetConfigName("monitor")
 	viper.AddConfigPath("/opt/blueprint/")
 	viper.AddConfigPath("/.config/")
@@ -56,6 +56,7 @@ func main() {
 
 	//setup defaults
 	viper.SetDefault("Endpoint", "http://localhost:8080")
+	viper.SetDefault("IgnoreElastic", false)
 	viper.SetDefault("ElasticSearchURL", "http://localhost:9200")
 	viper.SetDefault("VDCName", "dummyVDC")
 	viper.SetDefault("Opentracing", false)
@@ -64,6 +65,9 @@ func main() {
 	viper.SetDefault("UseSelfSigned", true)
 	viper.SetDefault("ForwardTraffic", false)
 	viper.SetDefault("ExchangeReporterURL", "")
+	viper.SetDefault("UseIAM", false)
+	viper.SetDefault("IAMURL", "")
+	viper.SetDefault("JWKSURL", "")
 
 	//setup cmd interface
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
@@ -72,6 +76,10 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
+}
+
+func main() {
+	setup_viper()
 
 	if viper.GetBool("verbose") {
 		logger.SetLevel(logrus.DebugLevel)

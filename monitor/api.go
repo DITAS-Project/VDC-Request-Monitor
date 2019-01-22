@@ -45,6 +45,12 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
+
+	UseIAM  bool   //if true, authentication is required for all requests
+	IAMURL  string // url for a client-user to optain a token
+	JWKSURL string //url to optain the public key for key validation
+
+	IgnoreElastic bool
 }
 
 type MeterMessage struct {
