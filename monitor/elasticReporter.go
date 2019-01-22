@@ -90,7 +90,7 @@ func (er *elasticReporter) Start() {
 
 			case <-er.QuitChan:
 				// We have been asked to stop.
-				log.Info("worker%d stopping")
+				log.Info("worker stopping")
 				return
 			}
 		}

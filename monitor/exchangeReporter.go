@@ -55,20 +55,20 @@ func (er *exchangeReporter) Start() {
 				resp, err := http.Post(er.ExchangeEndpoint, "application/json; charset=utf-8", b)
 
 				if err != nil {
-					log.Debug("failed to forward to :%s", err)
+					log.Debugf("failed to forward to :%s", err)
 				}
 
 				if resp.StatusCode > 200 {
 					msg, err := ioutil.ReadAll(resp.Body)
 					if err != nil {
-						log.Info("exchange failed %d - %s", resp.StatusCode, string(msg))
+						log.Infof("exchange failed %d - %s", resp.StatusCode, string(msg))
 					}
 				}
 				log.Debugf("send data to excahge with: %d", resp.StatusCode)
 
 			case <-er.QuitChan:
 				// We have been asked to stop.
-				log.Info("worker%d stopping")
+				log.Info("worker stopping")
 				return
 			}
 		}

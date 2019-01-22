@@ -45,8 +45,6 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
-
-	
 }
 
 type MeterMessage struct {
@@ -94,7 +92,7 @@ func readConfig() (Configuration, error) {
 
 	url, err := url.Parse(configuration.Endpoint)
 	if err != nil {
-		log.Errorf("target URL could not be parsed", err)
+		log.Errorf("target URL could not be parsed %+v", err)
 		return configuration, err
 	}
 

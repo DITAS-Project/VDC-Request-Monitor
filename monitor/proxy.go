@@ -143,7 +143,7 @@ func (mon *RequestMonitor) extractOperationId(path string, method string) string
 	optID, err := mon.cache.Match(path, method)
 
 	if err != nil {
-		log.Debug("failed to match %s %s - %+v", path, method, err)
+		log.Debugf("failed to match %s %s - %+v", path, method, err)
 	}
 
 	return optID
