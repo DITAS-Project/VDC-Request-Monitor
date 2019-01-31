@@ -7,4 +7,4 @@ RUN rm -rf vendor/
 RUN go get -u github.com/golang/dep/cmd/dep && dep ensure
 RUN CGO_ENABLED=0 GOOS=linux go build -a --installsuffix cgo --ldflags="-w -s -X main.Build=$(git rev-parse --short HEAD)" -o request-monitor
 
-CMD [ "go test ./..." ]
+CMD [ "sh" ]

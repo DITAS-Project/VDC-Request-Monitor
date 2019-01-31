@@ -14,7 +14,9 @@ pipeline {
         }
         stage('Testing'){
             agent {
-                docker { image 'ditas/vdc-request-monitor:testing' }
+                docker { 
+                    image 'ditas/vdc-request-monitor:testing' 
+                }
             }
             steps{
                 sh "go test ./..."
