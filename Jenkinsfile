@@ -2,9 +2,10 @@ pipeline {
     environment {
       TAG = "v02"
     }
-    agent any   
+    agent none   
     stages {
         stage('Image creation') {
+            agent any
             steps {
                 echo 'Creating the image...'
                 sh "docker build -f Dockerfile.testing -t \"ditas/vdc-request-monitor:testing\" ."
@@ -23,6 +24,7 @@ pipeline {
             }
         }
         stage('Push image') {
+            agent any
             steps {
                 echo 'Retrieving Docker Hub password from /opt/ditas-docker-hub.passwd...'
         
