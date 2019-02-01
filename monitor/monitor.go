@@ -78,7 +78,7 @@ func NewManger() (*RequestMonitor, error) {
 		return nil, err
 	}
 
-	blueprint, err := spec.ReadBlueprint(filepath.Join(configuration.configDir, "blueprint.json"))
+	blueprint, err := spec.ReadBlueprint("/opt/blueprint/blueprint.json")
 
 	if err != nil {
 		log.Warn("could not read blueprint (monitoring quality will be degraded)")

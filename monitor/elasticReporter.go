@@ -52,7 +52,7 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (elasticR
 	log.Debugf("using %s as ES endpoint", config.ElasticSearchURL)
 
 	if err != nil {
-		log.Error("failed to connect to elastic serach", err)
+		log.Errorf("failed to connect to elastic serach %+v", err)
 		return elasticReporter{}, err
 	}
 

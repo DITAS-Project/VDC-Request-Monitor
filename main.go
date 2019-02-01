@@ -49,7 +49,7 @@ func init() {
 
 func setup() {
 	viper.SetConfigName("monitor")
-	viper.AddConfigPath("/opt/blueprint/")
+	viper.AddConfigPath("/etc/ditas/")
 	viper.AddConfigPath("/.config/")
 	viper.AddConfigPath(".config/")
 	viper.AddConfigPath(".")
