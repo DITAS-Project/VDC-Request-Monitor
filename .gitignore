@@ -5,3 +5,4 @@
 Gopkg.lock
 debug
 VDC-Request-Monitor
+*.test

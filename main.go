@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func main() {
+func setup() {
 	viper.SetConfigName("monitor")
 	viper.AddConfigPath("/opt/blueprint/")
 	viper.AddConfigPath("/.config/")
@@ -69,8 +69,14 @@ func main() {
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
 	flag.Bool("verbose", false, "for verbose logging")
 
+}
+
+func main() {
+	setup()
+
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
+
 	viper.BindPFlags(pflag.CommandLine)
 
 	if viper.GetBool("verbose") {
