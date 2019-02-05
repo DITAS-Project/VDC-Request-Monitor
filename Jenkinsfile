@@ -1,7 +1,7 @@
 pipeline {
     environment {
       TAG = "v02"
-      NAME = "ditas/vdc-request-monitor"
+      IMAGENAME = "ditas/vdc-request-monitor"
     }
     agent any   
     stages {
