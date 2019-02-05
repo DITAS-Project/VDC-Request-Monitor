@@ -64,10 +64,12 @@ func setup() {
 	viper.SetDefault("UseSelfSigned", true)
 	viper.SetDefault("ForwardTraffic", false)
 	viper.SetDefault("ExchangeReporterURL", "")
+	viper.SetDefault("testing", "false")
 
 	//setup cmd interface
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
 	flag.Bool("verbose", false, "for verbose logging")
+	flag.Bool("testing", false, "starts agent in testing mode, no data will be persited!")
 
 }
 
@@ -81,6 +83,10 @@ func main() {
 
 	if viper.GetBool("verbose") {
 		logger.SetLevel(logrus.DebugLevel)
+	}
+
+	if viper.GetBool("testing") {
+		logger.Warningln("Running in testing mode, do not use in production! No data logged or stored.")
 	}
 
 	monitor.SetLogger(logger)
