@@ -22,7 +22,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/DITAS-Project/TUBUtil/util"
+	"github.com/DITAS-Project/TUBUtil"
 	"github.com/olivere/elastic"
 )
 

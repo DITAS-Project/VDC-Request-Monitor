@@ -54,6 +54,12 @@ pipeline {
             }
         }
         stage('Production image creation and push') {
+            when {
+                expression {
+                   // only create production image from master branch
+                   branch 'master'
+                }
+            }
             steps {                
                 // Change the tag from staging to production 
                 sh "docker tag ${IMAGENAME}:${TAG} ${IMAGENAME}:production"

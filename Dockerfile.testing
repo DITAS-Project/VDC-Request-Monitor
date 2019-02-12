@@ -1,10 +1,6 @@
-FROM golang:1.10.1 AS build
-ENV SOURCEDIR=/go/src/github.com/DITAS-Project/VDC-Request-Monitor
-RUN mkdir -p ${SOURCEDIR}
-WORKDIR ${SOURCEDIR}
+FROM golang:1.11.5
+WORKDIR /opt
 COPY . .
-RUN rm -rf vendor/
-RUN go get -u github.com/golang/dep/cmd/dep && dep ensure
-RUN CGO_ENABLED=0 GOOS=linux go build -a --installsuffix cgo --ldflags="-w -s -X main.Build=$(git rev-parse --short HEAD)" -o request-monitor
+RUN CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-w -s -X main.Build=$(git rev-parse --short HEAD)" -orequest-monitor
 
 CMD [ "sh" ]
