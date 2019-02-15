@@ -1,6 +1,6 @@
 FROM golang:1.11.5
 WORKDIR /opt
 COPY . .
-RUN CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-w -s -X main.Build=$(git rev-parse --short HEAD)" -orequest-monitor
+RUN CGO_ENABLED=0 go build -a --installsuffix cgo --ldflags="-w -s -X main.Build=$(git rev-parse --short HEAD)" -o request-monitor
 
 CMD [ "sh" ]
