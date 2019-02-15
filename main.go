@@ -47,9 +47,9 @@ func init() {
 	})
 }
 
-func setup_viper() {
+func setup() {
 	viper.SetConfigName("monitor")
-	viper.AddConfigPath("/opt/blueprint/")
+	viper.AddConfigPath("/etc/ditas/")
 	viper.AddConfigPath("/.config/")
 	viper.AddConfigPath(".config/")
 	viper.AddConfigPath(".")
@@ -68,21 +68,33 @@ func setup_viper() {
 	viper.SetDefault("UseIAM", false)
 	viper.SetDefault("IAMURL", "")
 	viper.SetDefault("JWKSURL", "")
+	viper.SetDefault("testing", "false")
 
 	//setup cmd interface
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
 	flag.Bool("verbose", false, "for verbose logging")
+	flag.Bool("testing", false, "starts agent in testing mode, no data will be persited!")
+
+}
+
+func main() {
+	setup()
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
+
 	viper.BindPFlags(pflag.CommandLine)
 }
 
 func main() {
-	setup_viper()
+	setup()
 
 	if viper.GetBool("verbose") {
 		logger.SetLevel(logrus.DebugLevel)
+	}
+
+	if viper.GetBool("testing") {
+		logger.Warningln("Running in testing mode, do not use in production! No data logged or stored.")
 	}
 
 	monitor.SetLogger(logger)

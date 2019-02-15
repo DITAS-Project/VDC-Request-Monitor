@@ -55,7 +55,7 @@ func (er *exchangeReporter) Start() {
 				resp, err := http.Post(er.ExchangeEndpoint, "application/json; charset=utf-8", b)
 
 				if err != nil {
-					log.Debugf("failed to forward to :%s", err)
+					log.Debugf("failed to forward to :%+v", err)
 				}
 
 				if resp.StatusCode > 200 {
