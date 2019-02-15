@@ -36,7 +36,7 @@ type ResouceCache struct {
 	pathMatcher []matcher
 }
 
-func NewResoruceCache(blueprint *spec.BlueprintType) ResouceCache {
+func NewResourceCache(blueprint *spec.BlueprintType) ResouceCache {
 	lfru, _ := lru.New2Q(128)
 	//!TODO: errohandling?
 
@@ -67,20 +67,20 @@ func NewResoruceCache(blueprint *spec.BlueprintType) ResouceCache {
 
 type matcher struct {
 	base   *regexp.Regexp
-	soruce string
+	source string
 }
 type sorter []matcher
 
 func (a sorter) Len() int           { return len(a) }
 func (a sorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a sorter) Less(i, j int) bool { return len(a[i].soruce) > len(a[j].soruce) }
+func (a sorter) Less(i, j int) bool { return len(a[i].source) > len(a[j].source) }
 
 var templateMatcher = regexp.MustCompile("{[a-zA-Z0-9\\-_]*}")
 
 func compile(path string) matcher {
 	return matcher{
 		base:   regexp.MustCompile(templateMatcher.ReplaceAllString(path, "([a-zA-Z0-9\\-_%]*)")),
-		soruce: path,
+		source: path,
 	}
 }
 
@@ -104,6 +104,15 @@ func (rc *ResouceCache) Add(path string, method string, operationID string) {
 	}
 }
 
+func (rc *ResouceCache) Contains(path string) bool {
+	for _, m := range rc.pathMatcher {
+		if m.Match(path) {
+			return true
+		}
+	}
+	return false
+}
+
 func (rc *ResouceCache) Match(path string, method string) (string, error) {
 
 	if val, ok := rc.Get(path, method); ok {
@@ -112,7 +121,7 @@ func (rc *ResouceCache) Match(path string, method string) (string, error) {
 
 	for _, m := range rc.pathMatcher {
 		if m.Match(path) {
-			if optID, ok := rc.schema[m.soruce][method]; ok {
+			if optID, ok := rc.schema[m.source][method]; ok {
 				rc.Add(path, method, optID)
 				return optID, nil
 			}

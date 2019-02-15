@@ -35,7 +35,7 @@ func TestRequestMonitor_validateIAM(t *testing.T) {
 			args: args{
 				req: &http.Request{
 					Header: map[string][]string{
-						"Authorizathion": []string{
+						"Authorization": []string{
 							"ONLY_ONE_VALUE_NO_SPACE",
 						},
 					},

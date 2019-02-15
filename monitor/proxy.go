@@ -34,59 +34,24 @@ import (
 )
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
-	//XXX: refactor me!
 	var requestID = mon.generateRequestID(req.RemoteAddr)
 
 	//validate Token
-	if mon.conf.UseIAM {
-		token, err := mon.validateIAM(req)
-		if err != nil {
-			http.Redirect(w, req, mon.conf.IAMURL, 301)
-			log.Debugf("redirecting due to IAM %+v", err)
-			return
-		} else {
-			mon.attachIAMToRequest(req, token)
-		}
+	if mon.serveIAM(w, req) {
+		return
 	}
 
-	var exchange exchangeMessage
-	//read payload
-	if mon.conf.ForwardTraffic {
-		body, err := ioutil.ReadAll(req.Body)
-
-		if err != nil {
-			log.Printf("Error reading body: %v", err)
-			http.Error(w, "can't read body", http.StatusBadRequest)
-			return
-		}
-
-		//enact proxy request
-		req.ContentLength = int64(len(body))
-		req.Body = ioutil.NopCloser(bytes.NewReader(body))
-
-		exchange = exchangeMessage{
-			RequestBody:   string(body),
-			RequestHeader: req.Header,
-		}
-
-	}
+	var exchange = mon.prepareExchange(w, req)
 	method := req.URL.Path
 	req.URL = mon.conf.endpointURL
 
 	operationID := mon.extractOperationId(req.URL.Path, req.Method)
 
-	//inject tracing header
-	if mon.conf.Opentracing {
-		opentracing.GlobalTracer().Inject(
-			opentracing.StartSpan("VDC-Request").Context(),
-			opentracing.HTTPHeaders,
-			opentracing.HTTPHeadersCarrier(req.Header),
-		)
+	if mon.blockNonBlueprintRequests(w, operationID) {
+		return
 	}
 
-	//inject looging header
-	req.Header.Set("X-DITAS-RequestID", requestID)
-	req.Header.Set("X-DITAS-OperationID", operationID)
+	mon.setRequestHeader(req.Header, requestID, operationID)
 
 	//forward the request
 	start := time.Now()
@@ -105,7 +70,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 
 	mon.push(requestID, meter)
 
-	if mon.conf.ForwardTraffic {
+	if nil != exchange {
 		exchange.OperationID = operationID
 		exchange.Client = req.RemoteAddr
 		exchange.Method = method
@@ -114,9 +79,69 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 		exchange.RequestTime = end
 		exchange.RequestID = requestID
 
-		mon.forward(requestID, exchange)
+		mon.forward(requestID, *exchange)
 	}
 }
+
+func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string, operationID string) {
+	//inject tracing header
+	if mon.conf.Opentracing {
+		_ = opentracing.GlobalTracer().Inject(
+			opentracing.StartSpan("VDC-Request").Context(),
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(header),
+		)
+	}
+	//inject looging header
+	header.Set("X-DITAS-RequestID", requestID)
+	header.Set("X-DITAS-OperationID", operationID)
+}
+
+func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
+	if mon.conf.UseIAM {
+		token, err := mon.validateIAM(req)
+		if err != nil {
+			http.Redirect(w, req, mon.conf.IAMURL, 301)
+			log.Debugf("redirecting due to IAM %+v", err)
+			return true
+		} else {
+			mon.attachIAMToRequest(req, token)
+		}
+	}
+
+	return false
+}
+
+func (mon *RequestMonitor) blockNonBlueprintRequests(w http.ResponseWriter, operationId string) bool {
+	if mon.conf.Strict && operationId == "" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return true
+	}
+	return false
+}
+
+func (mon *RequestMonitor) prepareExchange(w http.ResponseWriter, req *http.Request) *exchangeMessage {
+	if mon.conf.ForwardTraffic {
+		body, err := ioutil.ReadAll(req.Body)
+
+		if err != nil {
+			log.Printf("Error reading body: %v", err)
+			http.Error(w, "can't read body", http.StatusBadRequest)
+		}
+
+		//enact proxy request
+		req.ContentLength = int64(len(body))
+		req.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+		return &exchangeMessage{
+			RequestBody:   string(body),
+			RequestHeader: req.Header,
+		}
+
+	}
+	return nil
+}
+
 func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, error) {
 
 	keyID, ok := token.Header["kid"].(string)
@@ -141,30 +166,30 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 }
 
 func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
-	authHeader := req.Header.Get("Authorizathion")
+	authHeader := req.Header.Get("Authorization")
 
 	if authHeader == "" {
-		return nil, fmt.Errorf("No Authentication Header")
+		return nil, fmt.Errorf("no Authorization Header")
 	}
 
 	authHeaderComponentes := strings.Split(authHeader, " ")
 
 	if len(authHeaderComponentes) != 2 {
-		return nil, fmt.Errorf("Header in wrong format")
+		return nil, fmt.Errorf("header in wrong format")
 	}
 
 	if strings.ToLower(authHeaderComponentes[0]) != "bearer" {
-		return nil, fmt.Errorf("Header in wrong format")
+		return nil, fmt.Errorf("header in wrong format")
 	}
 
 	tokenString := authHeaderComponentes[1]
 	token, err := jwt.Parse(tokenString, mon.OptainLatesIAMKey)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse token, %+v", err)
+		return nil, fmt.Errorf("could not parse token, %+v", err)
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("Token nolonger valid")
+		return nil, fmt.Errorf("token nolonger valid")
 	}
 
 	return token, nil
@@ -215,9 +240,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	}
 
 	if requestID == "" {
-
 		requestID = mon.generateRequestID(resp.Request.RemoteAddr)
-
 	}
 
 	meter := MeterMessage{

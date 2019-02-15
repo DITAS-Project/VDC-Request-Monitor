@@ -51,6 +51,8 @@ type Configuration struct {
 	JWKSURL string //url to optain the public key for key validation
 
 	IgnoreElastic bool
+
+	Strict bool //enforce routing in blueprint
 }
 
 type MeterMessage struct {
@@ -94,15 +96,15 @@ func readConfig() (Configuration, error) {
 		viper.Debug()
 	}
 
-	viper.Unmarshal(&configuration)
+	_ = viper.Unmarshal(&configuration)
 
-	url, err := url.Parse(configuration.Endpoint)
+	endpoint, err := url.Parse(configuration.Endpoint)
 	if err != nil {
 		log.Errorf("target URL could not be parsed %+v", err)
 		return configuration, err
 	}
 
-	configuration.endpointURL = url
+	configuration.endpointURL = endpoint
 	configuration.configDir = filepath.Dir(viper.ConfigFileUsed())
 	log.Infof("using this config %+v", configuration)
 	return configuration, nil

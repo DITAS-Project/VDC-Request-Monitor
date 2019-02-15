@@ -85,7 +85,11 @@ func NewManger() (*RequestMonitor, error) {
 	blueprint, err := spec.ReadBlueprint("/opt/blueprint/blueprint.json")
 
 	if err != nil {
-		log.Warn("could not read blueprint (monitoring quality will be degraded)")
+		if !configuration.Strict {
+			log.Warn("could not read blueprint (monitoring quality will be degraded)")
+		} else {
+			log.Fatal("can't run in strict mode without a blueprint")
+		}
 	}
 
 	mng := &RequestMonitor{
@@ -93,7 +97,7 @@ func NewManger() (*RequestMonitor, error) {
 		blueprint:     blueprint,
 		monitorQueue:  make(chan MeterMessage, 10),
 		exchangeQueue: make(chan exchangeMessage, 10),
-		cache:         NewResoruceCache(blueprint),
+		cache:         NewResourceCache(blueprint),
 		iam:           NewIAM(configuration),
 	}
 
@@ -102,7 +106,7 @@ func NewManger() (*RequestMonitor, error) {
 		log.Errorf("failed to init tracer %+v", err)
 	}
 
-	//initilize proxy
+	//initialize proxy
 	fwd, err := forward.New(
 		forward.Stream(true),                                                     //allow for streaming
 		forward.PassHostHeader(true),                                             //allow for headers to pass
@@ -178,7 +182,11 @@ func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	log.Errorf("reqest:%s suffered internal error:%d - %v+", req.URL, statusCode, err)
 
 	w.WriteHeader(statusCode)
-	w.Write([]byte(http.StatusText(statusCode)))
+
+	_, err = w.Write([]byte(http.StatusText(statusCode)))
+	if err != nil {
+		log.Errorf("error writing message! %+v", err)
+	}
 }
 
 func (mon *RequestMonitor) generateRequestID(remoteAddr string) string {
