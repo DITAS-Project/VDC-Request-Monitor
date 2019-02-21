@@ -11,24 +11,12 @@ These instructions will get you a copy of the project up and running on your loc
 To install the go lang tools go to: [Go Getting Started](https://golang.org/doc/install)
 
 
-To install dep, you can use this command or go to [Dep - Github](https://github.com/golang/dep):
-```
-curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-```
-
-
-
 ### Installing
 
 For installation you have two options, building and running it on your local machine or using the docker approach.
 
 For local testing and building for that you can follow the following steps:
 
-install dependencies (only needs to be done once):
-
-```
-dep ensure
-```
 
 compile
 ```
@@ -94,7 +82,6 @@ Alternatively, users can use flags with the same name to configure the agent.
 
 ## Built With
 
-* [dep](https://github.com/golang/dep)
 * [viper](https://github.com/spf13/viper)
 * [oxy](https://github.com/vulcand/oxy)
 * Zipkin

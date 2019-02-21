@@ -92,7 +92,7 @@ func readConfig() (Configuration, error) {
 
 	url, err := url.Parse(configuration.Endpoint)
 	if err != nil {
-		log.Errorf("target URL could not be parsed", err)
+		log.Error("target URL could not be parsed", err)
 		return configuration, err
 	}
 

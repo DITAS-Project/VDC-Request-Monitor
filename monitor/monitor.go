@@ -29,6 +29,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/spf13/viper"
+
 	opentracing "github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 	"github.com/sirupsen/logrus"
@@ -78,7 +80,7 @@ func NewManger() (*RequestMonitor, error) {
 		return nil, err
 	}
 
-	blueprint, err := spec.ReadBlueprint(filepath.Join(configuration.configDir, "blueprint.json"))
+	blueprint, err := spec.ReadBlueprint("/opt/blueprint/blueprint.json")
 
 	if err != nil {
 		log.Warn("could not read blueprint (monitoring quality will be degraded)")
@@ -112,14 +114,16 @@ func NewManger() (*RequestMonitor, error) {
 
 	mng.oxy = fwd
 
-	reporter, err := NewElasticReporter(configuration, mng.monitorQueue)
-	if err != nil {
-		log.Errorf("Failed to init elastic reporter %+v", err)
-		return nil, err
+	if !viper.GetBool("testing") {
+		reporter, err := NewElasticReporter(configuration, mng.monitorQueue)
+		if err != nil {
+			log.Errorf("Failed to init elastic reporter %+v", err)
+			return nil, err
+		}
+		mng.reporter = reporter
 	}
-	mng.reporter = reporter
 
-	if configuration.ForwardTraffic {
+	if !viper.GetBool("testing") && configuration.ForwardTraffic {
 		exporter, err := newExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
 		if err != nil {
 			log.Errorf("Failed to init exchange reporter %+v", err)
@@ -129,6 +133,22 @@ func NewManger() (*RequestMonitor, error) {
 	}
 
 	log.Info("Request-Monitor created")
+
+	if viper.GetBool("testing") {
+		//publish all data that usually goes into a network worker
+		go func(q chan MeterMessage) {
+			for {
+				msg := <-q
+				log.Infof("meter:%+v", msg)
+			}
+		}(mng.monitorQueue)
+		go func(q chan exchangeMessage) {
+			for {
+				msg := <-q
+				log.Infof("exc:%+v", msg)
+			}
+		}(mng.exchangeQueue)
+	}
 
 	return mng, nil
 }
@@ -163,6 +183,10 @@ func (mon *RequestMonitor) generateRequestID(remoteAddr string) string {
 }
 
 func (mon *RequestMonitor) initTracing() error {
+	if viper.GetBool("testing") {
+		return nil
+	}
+
 	if mon.conf.Opentracing {
 		log.Info("opentracing active")
 		// Create our HTTP collector.
@@ -242,7 +266,7 @@ func (mon *RequestMonitor) Listen() {
 
 			err := httpsServer.ListenAndServeTLS("", "")
 			if err != nil {
-				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
 			}
 		}()
 	} else if mon.conf.UseSelfSigned {
@@ -265,7 +289,7 @@ func (mon *RequestMonitor) Listen() {
 
 			err := httpsServer.ListenAndServeTLS(cert, key)
 			if err != nil {
-				log.Fatalf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
 			}
 		}()
 	}
@@ -281,6 +305,8 @@ func (mon *RequestMonitor) Listen() {
 	}
 
 	log.Info("request-monitor ready")
-	httpServer.ListenAndServe()
-
+	err := httpServer.ListenAndServe()
+	if err != nil {
+		log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+	}
 }
