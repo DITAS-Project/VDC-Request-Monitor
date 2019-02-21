@@ -26,13 +26,13 @@ import (
 )
 
 type ExchangeReporter struct {
-	Queue            chan exchangeMessage
+	Queue            chan ExchangeMessage
 	ExchangeEndpoint string
 	QuitChan         chan bool
 }
 
 //NewExchangeReporter creates a new exchange worker
-func NewExchangeReporter(ExchangeEndpoint string, queue chan exchangeMessage) (ExchangeReporter, error) {
+func NewExchangeReporter(ExchangeEndpoint string, queue chan ExchangeMessage) (ExchangeReporter, error) {
 	//Wait for endpoint to become availible or timeout with error
 	return ExchangeReporter{
 		Queue:            queue,

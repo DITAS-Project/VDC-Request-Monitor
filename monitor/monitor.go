@@ -63,7 +63,7 @@ type RequestMonitor struct {
 	oxy       *forward.Forwarder
 
 	monitorQueue  chan MeterMessage
-	exchangeQueue chan exchangeMessage
+	exchangeQueue chan ExchangeMessage
 
 	reporter ElasticReporter
 	exporter ExchangeReporter
@@ -90,7 +90,7 @@ func NewManger() (*RequestMonitor, error) {
 		conf:          configuration,
 		blueprint:     blueprint,
 		monitorQueue:  make(chan MeterMessage, 10),
-		exchangeQueue: make(chan exchangeMessage, 10),
+		exchangeQueue: make(chan ExchangeMessage, 10),
 		cache:         NewResoruceCache(blueprint),
 	}
 
@@ -142,7 +142,7 @@ func NewManger() (*RequestMonitor, error) {
 				log.Infof("meter:%+v", msg)
 			}
 		}(mng.monitorQueue)
-		go func(q chan exchangeMessage) {
+		go func(q chan ExchangeMessage) {
 			for {
 				msg := <-q
 				log.Infof("exc:%+v", msg)
@@ -222,7 +222,7 @@ func (mon *RequestMonitor) push(requestID string, message MeterMessage) {
 	mon.monitorQueue <- message
 }
 
-func (mon *RequestMonitor) forward(requestID string, message exchangeMessage) {
+func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 	if mon.conf.ForwardTraffic {
 		message.RequestID = requestID
 		message.Timestamp = time.Now()

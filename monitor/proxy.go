@@ -30,7 +30,7 @@ import (
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	var requestID = mon.generateRequestID(req.RemoteAddr)
 
-	var exchange exchangeMessage
+	var exchange ExchangeMessage
 	//read payload
 	if mon.conf.ForwardTraffic {
 		body, err := ioutil.ReadAll(req.Body)
@@ -45,7 +45,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 		req.ContentLength = int64(len(body))
 		req.Body = ioutil.NopCloser(bytes.NewReader(body))
 
-		exchange = exchangeMessage{
+		exchange = ExchangeMessage{
 			RequestBody:   string(body),
 			RequestHeader: req.Header,
 		}
@@ -164,7 +164,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	resp.Body = ioutil.NopCloser(bytes.NewReader(body))
 
 	//report logging information
-	exchange := exchangeMessage{
+	exchange := ExchangeMessage{
 		ResponseBody:   string(body),
 		ResponseHeader: resp.Header,
 	}

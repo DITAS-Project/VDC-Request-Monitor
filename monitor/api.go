@@ -62,7 +62,7 @@ type MeterMessage struct {
 	ResponseLength int64 `json:"response.length,omitempty"`
 }
 
-type exchangeMessage struct {
+type ExchangeMessage struct {
 	MeterMessage
 	RequestID string `json:"id"`
 
