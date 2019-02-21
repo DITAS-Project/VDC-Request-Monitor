@@ -65,8 +65,8 @@ type RequestMonitor struct {
 	monitorQueue  chan MeterMessage
 	exchangeQueue chan exchangeMessage
 
-	reporter elasticReporter
-	exporter exchangeReporter
+	reporter ElasticReporter
+	exporter ExchangeReporter
 
 	cache ResouceCache
 }
@@ -124,7 +124,7 @@ func NewManger() (*RequestMonitor, error) {
 	}
 
 	if !viper.GetBool("testing") && configuration.ForwardTraffic {
-		exporter, err := newExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
+		exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
 		if err != nil {
 			log.Errorf("Failed to init exchange reporter %+v", err)
 			return nil, err
