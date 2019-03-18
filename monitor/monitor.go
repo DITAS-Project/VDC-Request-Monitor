@@ -42,7 +42,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 
 	spec "github.com/DITAS-Project/blueprint-go"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 var logger = logrus.New()
@@ -80,7 +80,7 @@ func NewManger() (*RequestMonitor, error) {
 		return nil, err
 	}
 
-	blueprint, err := spec.ReadBlueprint("/opt/blueprint/blueprint.json")
+	blueprint, err := spec.ReadBlueprint("/etc/ditas/blueprint.json")
 
 	if err != nil {
 		log.Warn("could not read blueprint (monitoring quality will be degraded)")
