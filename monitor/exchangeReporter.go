@@ -25,16 +25,16 @@ import (
 	"net/http"
 )
 
-type exchangeReporter struct {
-	Queue            chan exchangeMessage
+type ExchangeReporter struct {
+	Queue            chan ExchangeMessage
 	ExchangeEndpoint string
 	QuitChan         chan bool
 }
 
-//newExchangeReporter creates a new exchange worker
-func newExchangeReporter(ExchangeEndpoint string, queue chan exchangeMessage) (exchangeReporter, error) {
+//NewExchangeReporter creates a new exchange worker
+func NewExchangeReporter(ExchangeEndpoint string, queue chan ExchangeMessage) (ExchangeReporter, error) {
 	//Wait for endpoint to become availible or timeout with error
-	return exchangeReporter{
+	return ExchangeReporter{
 		Queue:            queue,
 		ExchangeEndpoint: ExchangeEndpoint,
 		QuitChan:         make(chan bool),
@@ -42,7 +42,7 @@ func newExchangeReporter(ExchangeEndpoint string, queue chan exchangeMessage) (e
 }
 
 //Start will create a new worker process, for processing exchange Messages
-func (er *exchangeReporter) Start() {
+func (er *ExchangeReporter) Start() {
 	go func() {
 		for {
 
@@ -76,7 +76,7 @@ func (er *exchangeReporter) Start() {
 }
 
 //Stop will terminate any running worker process
-func (er *exchangeReporter) Stop() {
+func (er *ExchangeReporter) Stop() {
 	go func() {
 		er.QuitChan <- true
 	}()

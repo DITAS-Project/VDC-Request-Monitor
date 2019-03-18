@@ -26,7 +26,7 @@ import (
 	"github.com/olivere/elastic"
 )
 
-type elasticReporter struct {
+type ElasticReporter struct {
 	Queue    chan MeterMessage
 	Client   *elastic.Client
 	VDCName  string
@@ -37,7 +37,7 @@ type elasticReporter struct {
 //NewElasticReporter creates a new reporter worker,
 //will fail if no elastic client can be built
 //otherwise retunrs a worker handler
-func NewElasticReporter(config Configuration, queue chan MeterMessage) (elasticReporter, error) {
+func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticReporter, error) {
 
 	util.SetLogger(logger)
 	util.SetLog(log)
@@ -53,10 +53,10 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (elasticR
 
 	if err != nil {
 		log.Errorf("failed to connect to elastic serach %+v", err)
-		return elasticReporter{}, err
+		return ElasticReporter{}, err
 	}
 
-	reporter := elasticReporter{
+	reporter := ElasticReporter{
 		Queue:    queue,
 		Client:   client,
 		VDCName:  config.VDCName,
@@ -69,7 +69,7 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (elasticR
 
 //Start creates a new worker process and waits for meterMessages
 //can only be terminated by calling Stop()
-func (er *elasticReporter) Start() {
+func (er *ElasticReporter) Start() {
 	go func() {
 		for {
 
@@ -98,12 +98,12 @@ func (er *elasticReporter) Start() {
 }
 
 //Stop termintates this Worker
-func (er *elasticReporter) Stop() {
+func (er *ElasticReporter) Stop() {
 	go func() {
 		er.QuitChan <- true
 	}()
 }
 
-func (er *elasticReporter) getElasticIndex() string {
+func (er *ElasticReporter) getElasticIndex() string {
 	return util.GetElasticIndex(er.VDCName)
 }
