@@ -28,33 +28,6 @@ type iAMTestCase struct {
 
 func TestRequestMonitor_validateIAM(t *testing.T) {
 
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *jwt.Token
-		wantErr bool
-	}{
-		{
-			name:    "Header in wrong format",
-			wantErr: true,
-			fields: fields{
-				conf: Configuration{
-					UseIAM: true,
-				},
-			},
-			args: args{
-				req: &http.Request{
-					Header: map[string][]string{
-						"Authorization": []string{
-							"ONLY_ONE_VALUE_NO_SPACE",
-						},
-					},
-				},
-			},
-			want: nil,
-		},
-	}
 	tests := []iAMTestCase{}
 	tests = append(tests, makeIAMTest("Empty Header", "", "", nil, true))
 	tests = append(tests, makeIAMTest("Header in wrong format only one value", "", "ONLY_ONE_VALUE_NO_SPACE", nil, true))
