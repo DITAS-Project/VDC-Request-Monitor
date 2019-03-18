@@ -21,3 +21,7 @@ func (iam *iam) LookupKeyID(keyID string) []jwk.Key {
 		return nil
 	}
 }
+
+func (iam *iam) StoreKeyID(keyID string, key []jwk.Key) {
+	iam.keyCache[keyID] = key
+}

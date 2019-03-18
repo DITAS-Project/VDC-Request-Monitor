@@ -101,7 +101,7 @@ func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bo
 	if mon.conf.UseIAM {
 		token, err := mon.validateIAM(req)
 		if err != nil {
-			http.Redirect(w, req, mon.conf.IAMURL, 301)
+			http.Redirect(w, req, mon.conf.IAMURL, 403)
 			log.Debugf("redirecting due to IAM %+v", err)
 			return true
 		} else {
@@ -158,8 +158,10 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 		}
 
 		if key := set.LookupKeyID(keyID); len(key) == 1 {
+			mon.iam.StoreKeyID(keyID, key)
 			return key[0].Materialize()
 		}
+
 	}
 
 	return nil, errors.New("unable to find key")
