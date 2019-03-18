@@ -28,7 +28,6 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/lestrrat/go-jwx/jwk"
 
 	opentracing "github.com/opentracing/opentracing-go"
 )
@@ -152,16 +151,7 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 	if key := mon.iam.LookupKeyID(keyID); len(key) == 1 {
 		return key[0].Materialize()
 	} else {
-		set, err := jwk.FetchHTTP(mon.conf.JWKSURL)
-		if err != nil {
-			return nil, err
-		}
-
-		if key := set.LookupKeyID(keyID); len(key) == 1 {
-			mon.iam.StoreKeyID(keyID, key)
-			return key[0].Materialize()
-		}
-
+		mon.iam.GetNewKey(keyID)
 	}
 
 	return nil, errors.New("unable to find key")
@@ -198,14 +188,11 @@ func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
 }
 
 func (mon *RequestMonitor) attachIAMToRequest(req *http.Request, token *jwt.Token) {
-	claims := token.Claims.(jwt.MapClaims)
 
-	roles := ""
-	for key, value := range claims {
-		roles += key + "," + fmt.Sprintf("%+v", value) + ";"
-	}
+	//_,_ := mon.iam.mapToContext(token)
 
-	req.Header.Set("X-DITAS-IAM", roles)
+	//TODO: add loop
+	req.Header.Add("X-DITAS-IAM", "")
 }
 
 func (mon *RequestMonitor) extractOperationId(path string, method string) string {
