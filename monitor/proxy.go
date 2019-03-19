@@ -99,13 +99,17 @@ func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string
 // return true if this needs to block the flow, false oterhwise
 func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
 	if mon.conf.UseIAM {
+		//TODO handle X-DITAS-Callback
 		token, err := mon.validateIAM(req)
 		if err != nil {
+			//w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
 			http.Redirect(w, req, mon.conf.IAMURL, 403)
 			log.Debugf("redirecting due to IAM %+v", err)
 			return true
 		} else {
-			mon.attachIAMToRequest(req, token)
+			if err := mon.attachIAMToRequest(req, token); err != nil {
+				//TODO: what do we do!!
+			}
 		}
 	}
 
@@ -187,12 +191,21 @@ func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
 	return token, nil
 }
 
-func (mon *RequestMonitor) attachIAMToRequest(req *http.Request, token *jwt.Token) {
+func (mon *RequestMonitor) attachIAMToRequest(req *http.Request, token *jwt.Token) error {
 
-	//_,_ := mon.iam.mapToContext(token)
+	session, err := mon.iam.mapToContext(token)
 
-	//TODO: add loop
-	req.Header.Add("X-DITAS-IAM", "")
+	if err != nil {
+		return err
+	}
+
+	for _, role := range session.roles {
+		req.Header.Add("X-DITAS-ROLES", role)
+	}
+
+	req.Header.Add("X-DITAS-USER", session.user)
+
+	return nil
 }
 
 func (mon *RequestMonitor) extractOperationId(path string, method string) string {
