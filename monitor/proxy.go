@@ -96,6 +96,7 @@ func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string
 	header.Set("X-DITAS-OperationID", operationID)
 }
 
+// return true if this needs to block the flow, false oterhwise
 func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
 	if mon.conf.UseIAM {
 		token, err := mon.validateIAM(req)
@@ -150,11 +151,10 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 
 	if key := mon.iam.LookupKeyID(keyID); len(key) == 1 {
 		return key[0].Materialize()
-	} else {
-		mon.iam.GetNewKey(keyID)
 	}
 
-	return nil, errors.New("unable to find key")
+	return mon.iam.GetNewKey(keyID)
+
 }
 
 func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
