@@ -7,6 +7,12 @@ import (
 	"github.com/lestrrat/go-jwx/jwk"
 )
 
+type DITASClaims struct {
+	*jwt.StandardClaims
+	Relams map[string][]string `json:"realm_access"`
+	User   string              `json:"preferred_username"`
+}
+
 type TokenContext struct {
 	roles []string
 	user  string
@@ -27,48 +33,28 @@ func NewIAM(conf Configuration) *iam {
 func (iam *iam) LookupKeyID(keyID string) []jwk.Key {
 	if keys, ok := iam.keyCache[keyID]; ok {
 		return keys
-	} else {
-		return nil
 	}
+	return nil
+
 }
 
 func (iam *iam) mapToContext(token *jwt.Token) (TokenContext, error) {
-	claims := token.Claims.(jwt.MapClaims)
-
 	var err error
-	var roles []string
-	var user string
+	context := TokenContext{}
+	if claims, ok := token.Claims.(*DITASClaims); ok {
+		context.user = claims.User
 
-	if realmAccess, ok := claims["realm_access"]; ok {
-		if realmMap, ok := realmAccess.(map[string][]string); ok {
-			if tmp, ok := realmMap["roles"]; !ok {
-				err = fmt.Errorf("unable to get roles from realmMap %+v", realmMap)
-			} else {
-				roles = tmp
-			}
+		if roles, ok := claims.Relams["roles"]; ok {
+			context.roles = roles
 		} else {
-			err = fmt.Errorf("realm_access was not in the expected format %+v", realmAccess)
+			err = fmt.Errorf("failed to extract roles from claim")
 		}
 
 	} else {
-		err = fmt.Errorf("realm missing in token")
+		err = fmt.Errorf("faield to cast claims %+v", token.Claims)
 	}
 
-	if preferred_username, ok := claims["preferred_username"]; ok {
-		if tmp, ok := preferred_username.(string); !ok {
-			err = fmt.Errorf("preferred_username was not in the expected format %+v", preferred_username)
-		} else {
-			user = tmp
-		}
-	} else {
-		err = fmt.Errorf("preferred_username missing in token")
-	}
-
-	return TokenContext{
-		roles: roles,
-		user:  user,
-	}, err
-
+	return context, err
 }
 
 func (iam *iam) GetNewKey(keyID string) (interface{}, error) {

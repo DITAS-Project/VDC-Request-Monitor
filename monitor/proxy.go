@@ -102,15 +102,20 @@ func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bo
 		//TODO handle X-DITAS-Callback
 		token, err := mon.validateIAM(req)
 		if err != nil {
-			//w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
+			w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
 			http.Redirect(w, req, mon.conf.IAMURL, 403)
 			log.Debugf("redirecting due to IAM %+v", err)
 			return true
-		} else {
-			if err := mon.attachIAMToRequest(req, token); err != nil {
-				//TODO: what do we do!!
-			}
 		}
+
+		if err := mon.attachIAMToRequest(req, token); err != nil {
+			//TODO: what do we do!!
+			w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
+			http.Redirect(w, req, mon.conf.IAMURL, 403)
+
+			return false
+		}
+
 	}
 
 	return false
@@ -179,7 +184,7 @@ func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
 	}
 
 	tokenString := authHeaderComponentes[1]
-	token, err := jwt.Parse(tokenString, mon.OptainLatesIAMKey)
+	token, err := jwt.ParseWithClaims(tokenString, &DITASClaims{}, mon.OptainLatesIAMKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse token, %+v", err)
 	}
