@@ -88,7 +88,7 @@ func create(blueprint *spec.BlueprintType) RequestMonitor {
 	return RequestMonitor{
 		conf:      Configuration{},
 		blueprint: blueprint,
-		cache:     NewResoruceCache(blueprint),
+		cache:     NewResourceCache(blueprint),
 	}
 }
 

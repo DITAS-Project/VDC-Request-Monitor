@@ -2,13 +2,20 @@ module github.com/DITAS-Project/VDC-Request-Monitor
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/DITAS-Project/KeycloakConfigClient v1.0.3
 	github.com/DITAS-Project/TUBUtil v1.0.1
 	github.com/DITAS-Project/blueprint-go v0.0.0-20190131104431-eebd846ff19c
 	github.com/DataDog/zstd v1.3.5 // indirect
+	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/Shopify/sarama v1.20.1 // indirect
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/apache/thrift v0.12.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-units v0.3.3 // indirect
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
@@ -24,6 +31,8 @@ require (
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
+	github.com/lestrrat/go-jwx v0.0.0-20180221005942-b7d4802280ae
+	github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8 // indirect
 	github.com/mailgun/timetools v0.0.0-20170619190023-f3a7b8ffff47 // indirect
 	github.com/mattn/go-colorable v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
@@ -31,6 +40,7 @@ require (
 	github.com/olivere/elastic v6.2.16+incompatible
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5 // indirect

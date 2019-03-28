@@ -56,6 +56,7 @@ func setup() {
 
 	//setup defaults
 	viper.SetDefault("Endpoint", "http://localhost:8080")
+	viper.SetDefault("IgnoreElastic", false)
 	viper.SetDefault("ElasticSearchURL", "http://localhost:9200")
 	viper.SetDefault("VDCName", "dummyVDC")
 	viper.SetDefault("Opentracing", false)
@@ -64,13 +65,17 @@ func setup() {
 	viper.SetDefault("UseSelfSigned", true)
 	viper.SetDefault("ForwardTraffic", false)
 	viper.SetDefault("ExchangeReporterURL", "")
+	viper.SetDefault("Strict", false)
+	viper.SetDefault("UseIAM", false)
+	viper.SetDefault("IAMURL", "")
+	viper.SetDefault("JWKSURL", "")
 	viper.SetDefault("testing", "false")
 
 	//setup cmd interface
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
 	flag.Bool("verbose", false, "for verbose logging")
-	flag.Bool("testing", false, "starts agent in testing mode, no data will be persited!")
-
+	flag.Bool("testing", false, "starts agent in testing mode, no data will be persisted!")
+	flag.Bool("Strict", false, "enforce strict routing, only allows routes present in the blueprint")
 }
 
 func main() {
@@ -79,7 +84,10 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	viper.BindPFlags(pflag.CommandLine)
+	err := viper.BindPFlags(pflag.CommandLine)
+	if err != nil {
+		log.Errorf("error parsing flags %+v", err)
+	}
 
 	if viper.GetBool("verbose") {
 		logger.SetLevel(logrus.DebugLevel)
@@ -92,7 +100,6 @@ func main() {
 	monitor.SetLogger(logger)
 	monitor.SetLog(log)
 
-	//
 	mon, err := monitor.NewManger()
 
 	if err != nil {

@@ -45,6 +45,14 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
+
+	UseIAM  bool   //if true, authentication is required for all requests
+	IAMURL  string // url for a client-user to optain a token
+	JWKSURL string //url to optain the public key for key validation
+
+	IgnoreElastic bool
+
+	Strict bool //enforce routing in blueprint
 }
 
 type MeterMessage struct {
@@ -88,15 +96,15 @@ func readConfig() (Configuration, error) {
 		viper.Debug()
 	}
 
-	viper.Unmarshal(&configuration)
+	_ = viper.Unmarshal(&configuration)
 
-	url, err := url.Parse(configuration.Endpoint)
+	endpoint, err := url.Parse(configuration.Endpoint)
 	if err != nil {
-		log.Error("target URL could not be parsed", err)
+		log.Errorf("target URL could not be parsed %+v", err)
 		return configuration, err
 	}
 
-	configuration.endpointURL = url
+	configuration.endpointURL = endpoint
 	configuration.configDir = filepath.Dir(viper.ConfigFileUsed())
 	log.Infof("using this config %+v", configuration)
 	return configuration, nil

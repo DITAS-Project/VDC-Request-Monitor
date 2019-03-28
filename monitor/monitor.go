@@ -69,6 +69,8 @@ type RequestMonitor struct {
 	exporter ExchangeReporter
 
 	cache ResouceCache
+
+	iam *iam
 }
 
 //NewManger Creates a new logging, tracing RequestMonitor
@@ -83,7 +85,11 @@ func NewManger() (*RequestMonitor, error) {
 	blueprint, err := spec.ReadBlueprint("/etc/ditas/blueprint.json")
 
 	if err != nil {
-		log.Warn("could not read blueprint (monitoring quality will be degraded)")
+		if !configuration.Strict {
+			log.Warn("could not read blueprint (monitoring quality will be degraded)")
+		} else {
+			log.Fatal("can't run in strict mode without a blueprint")
+		}
 	}
 
 	mng := &RequestMonitor{
@@ -91,7 +97,8 @@ func NewManger() (*RequestMonitor, error) {
 		blueprint:     blueprint,
 		monitorQueue:  make(chan MeterMessage, 10),
 		exchangeQueue: make(chan ExchangeMessage, 10),
-		cache:         NewResoruceCache(blueprint),
+		cache:         NewResourceCache(blueprint),
+		iam:           NewIAM(configuration),
 	}
 
 	err = mng.initTracing()
@@ -99,12 +106,13 @@ func NewManger() (*RequestMonitor, error) {
 		log.Errorf("failed to init tracer %+v", err)
 	}
 
+	//initialize proxy
 	fwd, err := forward.New(
-		forward.Stream(true),
-		forward.PassHostHeader(true),
-		forward.ErrorHandler(utils.ErrorHandlerFunc(handleError)),
-		forward.StateListener(forward.UrlForwardingStateListener(stateListener)),
-		forward.ResponseModifier(mng.responseInterceptor),
+		forward.Stream(true),                                                     //allow for streaming
+		forward.PassHostHeader(true),                                             //allow for headers to pass
+		forward.ErrorHandler(utils.ErrorHandlerFunc(handleError)),                //use a custom error function
+		forward.StateListener(forward.UrlForwardingStateListener(stateListener)), //log state changes of the lib
+		forward.ResponseModifier(mng.responseInterceptor),                        //we want to observe resposnes
 	)
 
 	if err != nil {
@@ -174,7 +182,11 @@ func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	log.Errorf("reqest:%s suffered internal error:%d - %v+", req.URL, statusCode, err)
 
 	w.WriteHeader(statusCode)
-	w.Write([]byte(http.StatusText(statusCode)))
+
+	_, err = w.Write([]byte(http.StatusText(statusCode)))
+	if err != nil {
+		log.Errorf("error writing message! %+v", err)
+	}
 }
 
 func (mon *RequestMonitor) generateRequestID(remoteAddr string) string {

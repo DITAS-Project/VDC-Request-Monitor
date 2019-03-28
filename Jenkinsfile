@@ -15,7 +15,7 @@ pipeline {
         }
         stage('Testing'){
             steps{
-                sh "docker run --rm ${IMAGENAME}:testing go test ./..."
+                sh "docker run --rm ${IMAGENAME}:testing go test -short ./..."
                 sh "docker rmi ${IMAGENAME}:testing"
             }
         }

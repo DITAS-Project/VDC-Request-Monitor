@@ -11,6 +11,18 @@ These instructions will get you a copy of the project up and running on your loc
 To install the go lang tools go to: [Go Getting Started](https://golang.org/doc/install)
 
 
+To run the monitor with Authorization enabled, you need to have an Identity Provider running.
+For our example Config we use a Keycloak instance. To run your own Keycloak server visit http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html and follow the instructions.
+
+//TODO
+
+We provide an example Config for a Keycloak Realm wich can be imported thru the Keycloak Administration Console. 
+
+![](keycloak_realm_import.png)
+
+After the import you can add Users you want to be authenticated in the Admin Console.
+
+
 ### Installing
 
 For installation you have two options, building and running it on your local machine or using the docker approach.
@@ -63,6 +75,9 @@ To configure the agent, you can specify the following values in a JSON file:
  * ForwardTraffic => allow the agent to forward all incoming and outgoing data to a secondary service for, e.g., auditing.
  * ExchangeReporterURL => if the *ForwardTraffic* is enabled, send the data to this location.
  * verbose => boolean to indicate if the agent should use verbose logging (recommended for debugging)
+ * Authentication => boolean to indicate if the agent should check Authentication Headers
+ * jwkURL => URL to get keys for JWT validation
+
 
 An example file could look like this:
 ```
@@ -74,7 +89,9 @@ An example file could look like this:
     "Opentracing":false,
     "UseSelfSigned":true,
     "ForwardTraffic":false,
-    "verbose":false
+    "verbose":false,
+    "Authentication": true,
+    "jwkURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs"
 }
 ```
 
