@@ -100,6 +100,9 @@ func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string
 func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
 	if mon.conf.UseIAM {
 		//TODO handle X-DITAS-Callback
+		if req.Method == http.MethodOptions || req.Method == http.MethodHead {
+			return false
+		}
 		token, err := mon.validateIAM(req)
 		if err != nil {
 			w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
