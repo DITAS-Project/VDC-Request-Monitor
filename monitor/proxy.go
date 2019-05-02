@@ -106,7 +106,7 @@ func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bo
 		token, err := mon.validateIAM(req)
 		if err != nil {
 			w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
-			http.Redirect(w, req, mon.conf.IAMURL, 403)
+			http.Redirect(w, req, fmt.Sprintf("%s/account", mon.conf.KeyCloakURL), 403)
 			log.Debugf("redirecting due to IAM %+v", err)
 			return true
 		}
@@ -114,7 +114,7 @@ func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bo
 		if err := mon.attachIAMToRequest(req, token); err != nil {
 			//TODO: what do we do!!
 			w.Header().Add("X-DEBUG", fmt.Sprintf("redirecting due to IAM %+v", err))
-			http.Redirect(w, req, mon.conf.IAMURL, 403)
+			http.Redirect(w, req, fmt.Sprintf("%s/account", mon.conf.KeyCloakURL), 403)
 
 			return false
 		}

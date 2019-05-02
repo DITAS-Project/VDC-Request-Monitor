@@ -58,7 +58,7 @@ func (iam *iam) mapToContext(token *jwt.Token) (TokenContext, error) {
 }
 
 func (iam *iam) GetNewKey(keyID string) (interface{}, error) {
-	set, err := jwk.FetchHTTP(iam.conf.JWKSURL)
+	set, err := jwk.FetchHTTP(fmt.Sprintf("%s/protocol/openid-connect/certs", iam.conf.KeyCloakURL))
 	if err != nil {
 		return nil, err
 	}

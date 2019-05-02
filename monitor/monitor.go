@@ -269,13 +269,13 @@ func (mon *RequestMonitor) Listen() {
 		}
 
 		httpsServer := &http.Server{
-			Addr:      ":443",
+			Addr:      fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
 			Handler:   http.HandlerFunc(mon.serve),
 			TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
 		}
 
 		go func() {
-
+			log.Infof("using %d", viper.GetInt("SSLPort"))
 			err := httpsServer.ListenAndServeTLS("", "")
 			if err != nil {
 				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
@@ -294,11 +294,11 @@ func (mon *RequestMonitor) Listen() {
 			}
 		}
 		httpsServer := &http.Server{
-			Addr:    ":443",
+			Addr:    fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
 			Handler: http.HandlerFunc(mon.serve),
 		}
 		go func() {
-
+			log.Infof("using %d", viper.GetInt("SSLPort"))
 			err := httpsServer.ListenAndServeTLS(cert, key)
 			if err != nil {
 				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
@@ -307,7 +307,7 @@ func (mon *RequestMonitor) Listen() {
 	}
 
 	httpServer := &http.Server{
-		Addr: ":80",
+		Addr: fmt.Sprintf(":%d", viper.GetInt("Port")),
 	}
 
 	if m != nil {
@@ -315,7 +315,7 @@ func (mon *RequestMonitor) Listen() {
 	} else {
 		httpServer.Handler = http.HandlerFunc(mon.serve)
 	}
-
+	log.Infof("using %d", viper.GetInt("Port"))
 	log.Info("request-monitor ready")
 	err := httpServer.ListenAndServe()
 	if err != nil {

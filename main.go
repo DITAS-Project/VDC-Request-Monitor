@@ -55,6 +55,8 @@ func setup() {
 	viper.AddConfigPath(".")
 
 	//setup defaults
+	viper.SetDefault("Port", 80)
+	viper.SetDefault("SSLPort", 443)
 	viper.SetDefault("Endpoint", "http://localhost:8080")
 	viper.SetDefault("IgnoreElastic", false)
 	viper.SetDefault("ElasticSearchURL", "http://localhost:9200")
