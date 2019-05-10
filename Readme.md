@@ -12,15 +12,7 @@ To install the go lang tools go to: [Go Getting Started](https://golang.org/doc/
 
 
 To run the monitor with Authorization enabled, you need to have an Identity Provider running.
-For our example Config we use a Keycloak instance. To run your own Keycloak server visit http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html and follow the instructions.
-
-//TODO
-
-We provide an example Config for a Keycloak Realm wich can be imported thru the Keycloak Administration Console. 
-
-![](keycloak_realm_import.png)
-
-After the import you can add Users you want to be authenticated in the Admin Console.
+For our example Config we use a Keycloak instance. To run your own Keycloak server visit [http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html](http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html) and follow the instructions. See also the [DITAS Keycloak documentation](https://docs.google.com/document/d/1wTUcJRKslYP0BC7gxxzftSbBO_ugsxPiB0W4wHTxr-k/edit?usp=sharing).
 
 
 ### Installing
@@ -49,7 +41,7 @@ docker build -t ditas/request-monitor -f Dockerfile.artifact .
 
 Attach the docker container to a VDC or other microservice like component:
 ```
-docker run -v ./monitor.json:/opt/blueprint/monitor.json --pid=container:<APPID> -p <HTTP-port>:80 -p <HTTPS-port>:443 ditas/request-monitor
+docker run -v ./monitor.json:/etc/ditas/monitor.json --pid=container:<APPID> -p <HTTP-port>:80 -p <HTTPS-port>:443 ditas/request-monitor
 ```
 Here `<APPID>` must be the container ID of the application you want to observe. The `<HTTP-port>` and `<HTTPS-port>` can be set as desidered. Also, refer to the **Configuration** section for information about the `monitor.json`-config file.
 
