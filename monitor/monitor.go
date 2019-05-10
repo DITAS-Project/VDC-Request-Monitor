@@ -62,11 +62,13 @@ type RequestMonitor struct {
 	blueprint *spec.BlueprintType
 	oxy       *forward.Forwarder
 
-	monitorQueue  chan MeterMessage
-	exchangeQueue chan ExchangeMessage
+	monitorQueue   chan MeterMessage
+	exchangeQueue  chan ExchangeMessage
+	benchmarkQueue chan ExchangeMessage
 
-	reporter ElasticReporter
-	exporter ExchangeReporter
+	reporter    ElasticReporter
+	exporter    ExchangeReporter
+	benExporter ExchangeReporter
 
 	cache ResouceCache
 
@@ -93,12 +95,13 @@ func NewManger() (*RequestMonitor, error) {
 	}
 
 	mng := &RequestMonitor{
-		conf:          configuration,
-		blueprint:     blueprint,
-		monitorQueue:  make(chan MeterMessage, 10),
-		exchangeQueue: make(chan ExchangeMessage, 10),
-		cache:         NewResourceCache(blueprint),
-		iam:           NewIAM(configuration),
+		conf:           configuration,
+		blueprint:      blueprint,
+		monitorQueue:   make(chan MeterMessage, 10),
+		exchangeQueue:  make(chan ExchangeMessage, 10),
+		cache:          NewResourceCache(blueprint),
+		iam:            NewIAM(configuration),
+		benchmarkQueue: make(chan ExchangeMessage, 10),
 	}
 
 	err = mng.initTracing()
@@ -138,6 +141,15 @@ func NewManger() (*RequestMonitor, error) {
 			return nil, err
 		}
 		mng.exporter = exporter
+	}
+
+	if configuration.BenchmarkForward {
+		benExporter, err := NewExchangeReporter(configuration.PLGURL, mng.benchmarkQueue)
+		if err != nil {
+			log.Errorf("Failed to init benchmark reporter %+v", err)
+			return nil, err
+		}
+		mng.benExporter = benExporter
 	}
 
 	log.Info("Request-Monitor created")
@@ -240,6 +252,13 @@ func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 		message.Timestamp = time.Now()
 		mon.exchangeQueue <- message
 	}
+	if mon.conf.BenchmarkForward {
+		if message.MeterMessage.Kind == http.MethodGet && message.RequestHeader.Get("X-DITAS-Sample") == "1" {
+			message.RequestID = requestID
+			message.Timestamp = time.Now()
+			mon.benchmarkQueue <- message
+		}
+	}
 }
 
 //Listen will start all worker threads and wait for incoming requests
@@ -251,6 +270,10 @@ func (mon *RequestMonitor) Listen() {
 	if mon.conf.ForwardTraffic {
 		mon.exporter.Start()
 		defer mon.exporter.Stop()
+	}
+	if mon.conf.BenchmarkForward {
+		mon.benExporter.Start()
+		defer mon.benExporter.Stop()
 	}
 
 	defer mon.reporter.Stop()

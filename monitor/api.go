@@ -46,6 +46,9 @@ type Configuration struct {
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
 
+	BenchmarkForward bool
+	PLGURL           string //PayloadGenerator URL
+
 	UseIAM  bool   //if true, authentication is required for all requests
 	IAMURL  string // url for a client-user to optain a token
 	JWKSURL string //url to optain the public key for key validation

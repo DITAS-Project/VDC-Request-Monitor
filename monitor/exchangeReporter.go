@@ -51,7 +51,7 @@ func (er *ExchangeReporter) Start() {
 				b := new(bytes.Buffer)
 				json.NewEncoder(b).Encode(work)
 				//send
-				log.Debug("sending data to excahge!")
+				log.Debugf("sending data to exchange: %+v", er.ExchangeEndpoint)
 				resp, err := http.Post(er.ExchangeEndpoint, "application/json; charset=utf-8", b)
 
 				if err != nil {

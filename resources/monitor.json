@@ -4,5 +4,6 @@
     "VDCName":"testing",
     "Opentracing":false,
     "UseSelfSigned":false,
-    "ForwardTraffic":false
-}
+    "ForwardTraffic":false,
+    "BenchmarkForward":true,
+    "PLGURL": "http://127.0.0.1:8081/requests"}
