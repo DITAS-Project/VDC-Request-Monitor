@@ -47,7 +47,7 @@ type Configuration struct {
 	ExchangeReporterURL string
 
 	BenchmarkForward bool
-	PLGURL           string //PayloadGenerator URL
+	BMSURL           string //PayloadGenerator URL
 
 	UseIAM  bool   //if true, authentication is required for all requests
 	IAMURL  string // url for a client-user to optain a token
@@ -78,6 +78,8 @@ type ExchangeMessage struct {
 	RequestID string `json:"id"`
 
 	Timestamp time.Time `json:"@timestamp"`
+
+	sample bool
 
 	RequestBody   string      `json:"request.body,omitempty"`
 	RequestHeader http.Header `json:"request.header,omitempty"`

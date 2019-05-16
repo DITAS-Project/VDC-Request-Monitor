@@ -132,24 +132,24 @@ func NewManger() (*RequestMonitor, error) {
 			return nil, err
 		}
 		mng.reporter = reporter
-	}
 
-	if !viper.GetBool("testing") && configuration.ForwardTraffic {
-		exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
-		if err != nil {
-			log.Errorf("Failed to init exchange reporter %+v", err)
-			return nil, err
+		if configuration.ForwardTraffic {
+			exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
+			if err != nil {
+				log.Errorf("Failed to init exchange reporter %+v", err)
+				return nil, err
+			}
+			mng.exporter = exporter
 		}
-		mng.exporter = exporter
-	}
 
-	if configuration.BenchmarkForward {
-		benExporter, err := NewExchangeReporter(configuration.PLGURL, mng.benchmarkQueue)
-		if err != nil {
-			log.Errorf("Failed to init benchmark reporter %+v", err)
-			return nil, err
+		if configuration.BenchmarkForward {
+			benExporter, err := NewExchangeReporter(configuration.BMSURL, mng.benchmarkQueue)
+			if err != nil {
+				log.Errorf("Failed to init benchmark reporter %+v", err)
+				return nil, err
+			}
+			mng.benExporter = benExporter
 		}
-		mng.benExporter = benExporter
 	}
 
 	log.Info("Request-Monitor created")
@@ -168,6 +168,12 @@ func NewManger() (*RequestMonitor, error) {
 				log.Infof("exc:%+v", msg)
 			}
 		}(mng.exchangeQueue)
+		go func(q chan ExchangeMessage) {
+			for {
+				msg := <-q
+				log.Infof("bench:%+v", msg)
+			}
+		}(mng.benchmarkQueue)
 	}
 
 	return mng, nil
@@ -253,7 +259,7 @@ func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 		mon.exchangeQueue <- message
 	}
 	if mon.conf.BenchmarkForward {
-		if message.MeterMessage.Kind == http.MethodGet && message.RequestHeader.Get("X-DITAS-Sample") == "1" {
+		if message.sample {
 			message.RequestID = requestID
 			message.Timestamp = time.Now()
 			mon.benchmarkQueue <- message
