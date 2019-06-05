@@ -1,6 +1,6 @@
 pipeline {
     environment {
-      TAG = "v02"
+      TAG = "v02.2"
       IMAGENAME = "ditas/vdc-request-monitor"
     }
     agent any   
