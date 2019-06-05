@@ -32,12 +32,11 @@ require (
 	github.com/lestrrat/go-jwx v0.0.0-20180221005942-b7d4802280ae
 	github.com/lestrrat/go-pdebug v0.0.0-20180220043741-569c97477ae8 // indirect
 	github.com/mailgun/timetools v0.0.0-20170619190023-f3a7b8ffff47 // indirect
-	github.com/mattn/go-colorable v0.1.0 // indirect
-	github.com/mattn/go-isatty v0.0.4 // indirect
+	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/olivere/elastic v6.2.16+incompatible
-	github.com/onsi/ginkgo v1.7.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/onsi/ginkgo v1.8.0 // indirect
+	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
 	github.com/opentracing/opentracing-go v1.0.2
