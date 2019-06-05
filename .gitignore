@@ -7,3 +7,5 @@ debug
 VDC-Request-Monitor
 *.test
 .idea
+VDC-Request-Monitor.iml
+.vscode/settings.json

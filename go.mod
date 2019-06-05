@@ -3,7 +3,7 @@ module github.com/DITAS-Project/VDC-Request-Monitor
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/DITAS-Project/KeycloakConfigClient v1.0.3
-	github.com/DITAS-Project/TUBUtil v1.0.1
+	github.com/DITAS-Project/TUBUtil v1.0.2
 	github.com/DITAS-Project/blueprint-go v0.0.0-20190131104431-eebd846ff19c
 	github.com/DataDog/zstd v1.3.5 // indirect
 	github.com/Microsoft/go-winio v0.4.12 // indirect
@@ -19,7 +19,6 @@ require (
 	github.com/eapache/go-resiliency v1.1.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/go-openapi/jsonpointer v0.17.2 // indirect
 	github.com/go-openapi/jsonreference v0.17.2 // indirect
@@ -27,7 +26,6 @@ require (
 	github.com/go-openapi/swag v0.17.2 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3

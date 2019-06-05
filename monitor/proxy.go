@@ -133,7 +133,7 @@ func (mon *RequestMonitor) blockNonBlueprintRequests(w http.ResponseWriter, oper
 }
 
 func (mon *RequestMonitor) prepareExchange(w http.ResponseWriter, req *http.Request) *ExchangeMessage {
-	if mon.conf.ForwardTraffic {
+	if mon.conf.ForwardTraffic || mon.conf.BenchmarkForward {
 		body, err := ioutil.ReadAll(req.Body)
 
 		if err != nil {
@@ -145,9 +145,13 @@ func (mon *RequestMonitor) prepareExchange(w http.ResponseWriter, req *http.Requ
 		req.ContentLength = int64(len(body))
 		req.Body = ioutil.NopCloser(bytes.NewReader(body))
 
+		var sample = (req.Header.Get("X-DITAS-Sample") == "1")
+		sample = sample && req.Method == http.MethodGet
+
 		return &ExchangeMessage{
 			RequestBody:   string(body),
 			RequestHeader: req.Header,
+			sample:        sample,
 		}
 
 	}
@@ -238,10 +242,15 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	//extract requestID
 	var requestID string
 	var operationID string
+	var sample bool
 
 	if resp.Request != nil {
 		requestID = resp.Request.Header.Get("X-DITAS-RequestID")
 		operationID = resp.Request.Header.Get("X-DITAS-OperationID")
+		if mon.conf.BenchmarkForward {
+			sample = resp.Request.Header.Get("X-DITAS-Sample") == "1"
+			sample = sample && resp.Request.Method == http.MethodGet
+		}
 	}
 
 	if resp.Request == nil {
@@ -261,7 +270,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	}
 	mon.push(requestID, meter)
 
-	if !mon.conf.ForwardTraffic {
+	if !mon.conf.ForwardTraffic && !mon.conf.BenchmarkForward {
 		return nil
 	}
 
@@ -288,6 +297,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	exchange.RequestID = requestID
 	exchange.ResponseCode = resp.StatusCode
 	exchange.ResponseLength = resp.ContentLength
+	exchange.sample = sample
 
 	mon.forward(requestID, exchange)
 	return nil

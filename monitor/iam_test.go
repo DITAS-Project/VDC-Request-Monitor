@@ -1,27 +1,18 @@
 package monitor
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/lestrrat/go-jwx/jwk"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"sync"
 	"testing"
-	"time"
-
-	"github.com/docker/go-connections/nat"
-	"github.com/lestrrat/go-jwx/jwk"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
 
 	kkc "github.com/DITAS-Project/KeycloakConfigClient/kcc"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 )
 
 type iAMTestCaseFields struct {
@@ -57,13 +48,13 @@ func TestRequestMonitor_validateIAM(t *testing.T) {
 	tests = append(tests, makeIAMTest("Could not Parse Token key fetch error", "nourl", "Bearer eyJhbGciOiJIU!zI1NiIsInR5cCI6IkpXVCIsImtpZCI6Imdhc2dhc2cifQ.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.UoYdfy0Sj5_4ujQVBVj1g0BGOIdXljCIckoQcuUiHyM", nil, true))
 	tests = append(tests, makeIAMTest("Unable to find Key", "https://www.googleapis.com/oauth2/v3/certs", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Imdhc2dhc2cifQ.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.UoYdfy0Sj5_4ujQVBVj1g0BGOIdXljCIckoQcuUiHyM", nil, true))
 
-	tests = append(tests, makeIAMTest("Token no longer valid", "http://127.0.0.1:8080/auth/realms/vdc_access/protocol/openid-connect/certs", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ1Mm43MW1jQWRIaDBxMS12QzJYMHVYX1lmZzNjY0VtaDJxT2hObTgwSGdRIn0.eyJqdGkiOiIzYTI0MmMyMS1lMDliLTRlOTgtYWMwOC1lNjJlNjRkOGVkZDkiLCJleHAiOjE1NDc2NTU2MDcsIm5iZiI6MCwiaWF0IjoxNTQ3NjU1MzA3LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvdmRjX2R1bW15IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjI0OTY2NDI0LTEzMjQtNDdmMy1hNTNlLTM2ZmQzMmJiMjZlMCIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3RfY2xpZW50IiwiYXV0aF90aW1lIjowLCJzZXNzaW9uX3N0YXRlIjoiMmFmNDVkY2MtNDU4Ny00MWQ4LWFjZGUtM2ZlMjg1MzNmZTJjIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkb2N0b3IiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3RfZG9jdG9yIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJmYW1pbHlfbmFtZSI6IkRvZSJ9.jKEPmwvCK3E46w5hwBr8WEQDcM1oMlmSmjO4anpx5fdMwk2TS7YgDFfqzzmZqOSeKt8Lw5L5VFGXB83rTf1AOOYy4rfKeImgH_3k_uvh31_dUzpg-7H4Tnwi0eiZiVJGE2iK3QoYCZdN8XmQltO9bvAEucvizb9cG2UnBcK8pCzqLzEfIxeE9oZHwrTo20s6SRGzY1vo96DwSG4weur3iJMpv4aSHjlQNXRbH3yTepucK6PxCoFNO8R7gxg7Ak4DVpA5gOJa5MM3V7U_ereT5xTNcrhYRq_a1B4Ey9tJvcr5Ud2HM1Y6myRKKpOyXxM-OJLggzOuL2eDv5EkRgexBQ", nil, true))
+	tests = append(tests, makeIAMTest("Token no longer valid", "http://127.0.0.1:8080/auth/realms/vdc_access", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ1Mm43MW1jQWRIaDBxMS12QzJYMHVYX1lmZzNjY0VtaDJxT2hObTgwSGdRIn0.eyJqdGkiOiIzYTI0MmMyMS1lMDliLTRlOTgtYWMwOC1lNjJlNjRkOGVkZDkiLCJleHAiOjE1NDc2NTU2MDcsIm5iZiI6MCwiaWF0IjoxNTQ3NjU1MzA3LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvdmRjX2R1bW15IiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjI0OTY2NDI0LTEzMjQtNDdmMy1hNTNlLTM2ZmQzMmJiMjZlMCIsInR5cCI6IkJlYXJlciIsImF6cCI6InRlc3RfY2xpZW50IiwiYXV0aF90aW1lIjowLCJzZXNzaW9uX3N0YXRlIjoiMmFmNDVkY2MtNDU4Ny00MWQ4LWFjZGUtM2ZlMjg1MzNmZTJjIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkb2N0b3IiXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3RfZG9jdG9yIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJmYW1pbHlfbmFtZSI6IkRvZSJ9.jKEPmwvCK3E46w5hwBr8WEQDcM1oMlmSmjO4anpx5fdMwk2TS7YgDFfqzzmZqOSeKt8Lw5L5VFGXB83rTf1AOOYy4rfKeImgH_3k_uvh31_dUzpg-7H4Tnwi0eiZiVJGE2iK3QoYCZdN8XmQltO9bvAEucvizb9cG2UnBcK8pCzqLzEfIxeE9oZHwrTo20s6SRGzY1vo96DwSG4weur3iJMpv4aSHjlQNXRbH3yTepucK6PxCoFNO8R7gxg7Ak4DVpA5gOJa5MM3V7U_ereT5xTNcrhYRq_a1B4Ey9tJvcr5Ud2HM1Y6myRKKpOyXxM-OJLggzOuL2eDv5EkRgexBQ", nil, true))
 
 	if !testing.Short() {
 		tokenString, token := getValidToken(t)
-		tests = append(tests, makeIAMTest("Valid token", "http://127.0.0.1:8080/auth/realms/vdc_access/protocol/openid-connect/certs", fmt.Sprintf("Bearer %s", tokenString), token, false))
+		tests = append(tests, makeIAMTest("Valid token", "http://127.0.0.1:8080/auth/realms/vdc_access", fmt.Sprintf("Bearer %s", tokenString), token, false))
 
-		tests = append(tests, makeIAMTest("Valid token cacheHit", "http://127.0.0.1:8080/auth/realms/vdc_access/protocol/openid-connect/certs", fmt.Sprintf("Bearer %s", tokenString), token, false))
+		tests = append(tests, makeIAMTest("Valid token cacheHit", "http://127.0.0.1:8080/auth/realms/vdc_access", fmt.Sprintf("Bearer %s", tokenString), token, false))
 	}
 
 	for _, tt := range tests {
@@ -97,8 +88,7 @@ func TestRequestMonitor_serveIAM(t *testing.T) {
 	mon := RequestMonitor{}
 
 	mon.conf.UseIAM = true
-	mon.conf.IAMURL = "http://127.0.0.1:8080"
-	mon.conf.JWKSURL = "http://127.0.0.1:8080/auth/realms/vdc_access/protocol/openid-connect/certs"
+	mon.conf.KeyCloakURL = "http://127.0.0.1:8080/auth/realms/vdc_access"
 
 	mon.iam = NewIAM(mon.conf)
 
@@ -110,6 +100,16 @@ func TestRequestMonitor_serveIAM(t *testing.T) {
 	if w.Code != 403 {
 		t.Fatalf("request should have used 403 as it did not contain a token!")
 	}
+
+	req = httptest.NewRequest("HEAD", "http://vdc/ask", nil)
+	w = httptest.NewRecorder()
+
+	result := mon.serveIAM(w, req)
+
+	if result {
+		t.Fatal("IAM should ignore management header")
+	}
+
 
 	accessToken, _ := getValidToken(t)
 
@@ -170,10 +170,10 @@ func createValidToken() *jwt.Token {
 	return token
 }
 
-func makeIAMTest(name string, jwkurl string, header string, token *jwt.Token, wantErr bool) iAMTestCase {
+func makeIAMTest(name string, keycloakURL string, header string, token *jwt.Token, wantErr bool) iAMTestCase {
 	conf := Configuration{
-		UseIAM:  true,
-		JWKSURL: jwkurl,
+		UseIAM:      true,
+		KeyCloakURL: keycloakURL,
 	}
 	return iAMTestCase{
 		name:    name,
@@ -195,89 +195,13 @@ func makeIAMTest(name string, jwkurl string, header string, token *jwt.Token, wa
 	}
 }
 
-var mutex = &sync.Mutex{}
+var imaMutex = &sync.Mutex{}
 
 func startKeyCloak(t *testing.T) string {
-	mutex.Lock()
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		t.Error(err)
-		t.SkipNow()
-		return ""
-	}
-
-	t.Log("connected to docker")
-
-	//remove old one if present
-	args, err := filters.ParseFlag("name=keycloak_testing", filters.NewArgs())
-	if err != nil {
-		t.Error(err)
-		t.SkipNow()
-		return ""
-	}
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{
-		Filters: args,
-	})
-	if err != nil {
-		t.Error(err)
-		t.SkipNow()
-		return ""
-	}
-
-	for _, ct := range containers {
-		_ = cli.ContainerStop(ctx, ct.ID, nil)
-		_ = cli.ContainerRemove(ctx, ct.ID, types.ContainerRemoveOptions{
-			Force: true,
-		})
-		t.Log("removed old container")
-	}
-
-	//create new container
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: "ditas/keycloak:latest",
-		Cmd:   []string{""},
-		ExposedPorts: nat.PortSet{
-			"8080/tcp": struct{}{}, //keycloak http
-			"8000/tcp": struct{}{}, //keycloak config api http
-		},
-	}, &container.HostConfig{
-		AutoRemove: true,
-		PortBindings: nat.PortMap{
-			"8080/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "8080",
-				},
-			},
-			"8000/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "8000",
-				},
-			},
-		},
-	}, nil, "keycloak_testing")
-	if err != nil {
-		t.Error(err)
-		return ""
-	}
-	t.Log("created ct")
-
-	//start
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		t.Error(err)
-		return ""
-	}
-	t.Log("started keycloak")
-
-	//configure
-	_ = waitForConnection("http://localhost:8000/v1/keys", nil)
-	//setup testing-relam
+	id := startContainer(t, imaMutex,"keycloak_testing","ditas/keycloak:latest",[]int{8080,8000},"http://localhost:8000/v1/keys")
 	setupTestingRealm(t)
 	_ = waitForConnection("http://localhost:8080/auth/realms/vdc_access", nil)
-	mutex.Unlock()
-	return resp.ID
+	return id
 }
 
 func setupTestingRealm(t *testing.T) {
@@ -308,54 +232,9 @@ func setupTestingRealm(t *testing.T) {
 }
 
 func stopKeyCloak(t *testing.T, id string) {
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		t.Error(err)
-	}
-
-	if err := cli.ContainerStop(ctx, id, nil); err != nil {
-		t.Error(err)
-	}
+	stopContainer(t,id)
 }
 
-func waitForConnection(url string, timeout *time.Duration) error {
-
-	signal := make(chan bool)
-
-	go func() {
-		backoff := 2 * time.Second
-		for {
-			resp, err := http.Head(url)
-			if err != nil {
-				fmt.Printf("tried to connect to keycloak %+v waiting %d seconds\n", err, backoff)
-
-			} else {
-				if resp.StatusCode < 400 {
-					fmt.Printf("got resp from keycloak %d\n", resp.StatusCode)
-					signal <- true
-				} else {
-					fmt.Printf("tried to connect to keycloak %d waiting %d seconds\n", resp.StatusCode, backoff)
-				}
-			}
-			time.Sleep(backoff)
-			backoff = backoff * 2
-		}
-	}()
-
-	if timeout != nil {
-		select {
-		case <-signal:
-			return nil
-		case <-time.After(*timeout):
-			return fmt.Errorf("all timedout - keycloak could not be reached")
-		}
-	} else {
-		<-signal
-		return nil
-	}
-
-}
 
 type keycloakTokenResponse struct {
 	AccessToken string `json:"access_token"`
@@ -363,7 +242,7 @@ type keycloakTokenResponse struct {
 
 func getValidToken(t *testing.T) (string, *jwt.Token) {
 
-	res, err := http.PostForm("http://localhost:8080/auth/realms/vdc_access/protocol/openid-connect/token", map[string][]string{
+	res, err := http.PostForm("http://127.0.0.1:8080/auth/realms/vdc_access/protocol/openid-connect/token", map[string][]string{
 		"client_id":  []string{"vdc_client"},
 		"username":   []string{"test"},
 		"password":   []string{"test"},

@@ -60,6 +60,8 @@ func setup() {
 	viper.SetDefault("Endpoint", "http://localhost:8080")
 	viper.SetDefault("IgnoreElastic", false)
 	viper.SetDefault("ElasticSearchURL", "http://localhost:9200")
+	viper.SetDefault("ElasticUser", "")
+	viper.SetDefault("ElasticPassword", "")
 	viper.SetDefault("VDCName", "dummyVDC")
 	viper.SetDefault("Opentracing", false)
 	viper.SetDefault("ZipkinEndpoint", "")

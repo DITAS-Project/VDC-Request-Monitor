@@ -35,6 +35,10 @@ type Configuration struct {
 
 	ElasticSearchURL string //eleasticSerach endpoint
 
+	ElasticBasicAuth bool //if active we use basic auth
+	ElasticUser      string
+	ElasticPassword  string
+
 	VDCName string // VDCName (used for the index name in elastic serach)
 
 	Opentracing    bool   //tells the proxy if a tracing header should be injected
@@ -46,8 +50,14 @@ type Configuration struct {
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
 
-	UseIAM      bool //if true, authentication is required for all requests
-	KeyCloakURL string
+	UseIAM      bool   //if true, authentication is required for all requests
+	KeyCloakURL string // url for keycloak
+
+	IAMURL  string //deprecated
+	JWKSURL string //deprecated
+
+	BenchmarkForward bool
+	BMSURL           string //PayloadGenerator URL
 
 	IgnoreElastic bool
 
@@ -77,6 +87,8 @@ type ExchangeMessage struct {
 	RequestID string `json:"id"`
 
 	Timestamp time.Time `json:"@timestamp"`
+
+	sample bool
 
 	RequestBody   string      `json:"request.body,omitempty"`
 	RequestHeader http.Header `json:"request.header,omitempty"`
@@ -109,5 +121,15 @@ func readConfig() (Configuration, error) {
 	configuration.endpointURL = endpoint
 	configuration.configDir = filepath.Dir(viper.ConfigFileUsed())
 	log.Infof("using this config %+v", configuration)
+
+	if configuration.UseIAM {
+		//enable compability to old config files
+		if configuration.KeyCloakURL == "" && configuration.IAMURL != "" {
+			configuration.KeyCloakURL = configuration.IAMURL[:len(configuration.IAMURL)-31]
+
+			log.Infof("migrated to new config %s", configuration.KeyCloakURL)
+		}
+	}
+
 	return configuration, nil
 }

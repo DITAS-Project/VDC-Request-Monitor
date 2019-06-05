@@ -2,8 +2,8 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DITAS-Project/KeycloakConfigClient v1.0.3 h1:JnNpVKjMDpph8R9UoaGQW0PGdUdQzJWumUDe5boHZX0=
 github.com/DITAS-Project/KeycloakConfigClient v1.0.3/go.mod h1:RgaawGxRrXp2wP+CIcewN/y9ZDmBkCAAJyHELuC9XDU=
-github.com/DITAS-Project/TUBUtil v1.0.1 h1:h2MjQQo+eIOpJABf5dis/7n185MxdPC12kXpHs7x58s=
-github.com/DITAS-Project/TUBUtil v1.0.1/go.mod h1:0JKxIR9GT8yU1dWri0GJX7AAUcfFxGCv7sP/HVE/a9U=
+github.com/DITAS-Project/TUBUtil v1.0.2 h1:bQBXiUGdNgJL1Uuujz7XnbFtr2V2J+nSueU4gEqSZGE=
+github.com/DITAS-Project/TUBUtil v1.0.2/go.mod h1:KCPHxPQJOMvxsXaqt4lDMjGkcROHNY9TZyB2/VpxRIs=
 github.com/DITAS-Project/blueprint-go v0.0.0-20190131104431-eebd846ff19c h1:3mmJ75tFS29v1eQkYC/bTCA6sdDDzBM41L+mnbrInXc=
 github.com/DITAS-Project/blueprint-go v0.0.0-20190131104431-eebd846ff19c/go.mod h1:1QPU3t9136eLD320SvfENOlnjkYNxcu+HMl719/3SaY=
 github.com/DataDog/zstd v1.3.5 h1:DtpNbljikUepEPD16hD4LvIcmhnhdLTiW/5pHgbmp14=
@@ -75,8 +75,8 @@ github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/snappy v0.0.1 h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/google/go-cmp v0.2.0 h1:+dTQ8DZQJz0Mb/HjFlkptS1FeQ4cWSnN941F8aEG4SQ=
-github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
+github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
+github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/hashicorp/golang-lru v0.5.0 h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo=

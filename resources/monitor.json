@@ -4,5 +4,6 @@
     "VDCName":"testing",
     "Opentracing":false,
     "UseSelfSigned":false,
-    "ForwardTraffic":false
+    "ForwardTraffic":false,
+    "BenchmarkForward":false
 }

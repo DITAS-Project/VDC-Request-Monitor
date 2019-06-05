@@ -12,15 +12,7 @@ To install the go lang tools go to: [Go Getting Started](https://golang.org/doc/
 
 
 To run the monitor with Authorization enabled, you need to have an Identity Provider running.
-For our example Config we use a Keycloak instance. To run your own Keycloak server visit http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html and follow the instructions.
-
-//TODO
-
-We provide an example Config for a Keycloak Realm wich can be imported thru the Keycloak Administration Console. 
-
-![](keycloak_realm_import.png)
-
-After the import you can add Users you want to be authenticated in the Admin Console.
+For our example Config we use a Keycloak instance. To run your own Keycloak server visit [http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html](http://blog.keycloak.org/2015/10/getting-started-with-keycloak.html) and follow the instructions. See also the [DITAS Keycloak documentation](https://docs.google.com/document/d/1wTUcJRKslYP0BC7gxxzftSbBO_ugsxPiB0W4wHTxr-k/edit?usp=sharing).
 
 
 ### Installing
@@ -49,19 +41,21 @@ docker build -t ditas/request-monitor -f Dockerfile.artifact .
 
 Attach the docker container to a VDC or other microservice like component:
 ```
-docker run -v ./monitor.json:/opt/blueprint/monitor.json --pid=container:<APPID> -p <HTTP-port>:80 -p <HTTPS-port>:443 ditas/request-monitor
+docker run -v ./monitor.json:/etc/ditas/monitor.json --pid=container:<APPID> -p <HTTP-port>:80 -p <HTTPS-port>:443 ditas/request-monitor
 ```
 Here `<APPID>` must be the container ID of the application you want to observe. The `<HTTP-port>` and `<HTTPS-port>` can be set as desidered. Also, refer to the **Configuration** section for information about the `monitor.json`-config file.
 
 ## Running the tests
+Before testing run `prepare.sh` in the testing folder.
 
 For testing you can use:
 ```
  go test ./...
 ```
 
-For that make sure you have an elastic search running locally at the default port and some sort of local service that can process HTTP traffic, we recommend net-cat in listening mode `nc -l 8080`. 
+Use `-short` if you do not have docker on your machine than some integration tests will be skipped.
 
+For that make sure you have an elastic search running locally at the default port and some sort of local service that can process HTTP traffic, we recommend net-cat in listening mode `nc -l 8080`. 
 
 ## Configuration
 To configure the agent, you can specify the following values in a JSON file:
@@ -77,6 +71,8 @@ To configure the agent, you can specify the following values in a JSON file:
  * verbose => boolean to indicate if the agent should use verbose logging (recommended for debugging)
  * Authentication => boolean to indicate if the agent should check Authentication Headers
  * jwkURL => URL to get keys for JWT validation
+ * ForwardBenchmark => boolean to indicate if agent should report data to the BenchmarkScheduler
+ * BMSURL => URL of the BenchmarkScheduler where the data should be reported to 
 
 
 An example file could look like this:
@@ -91,7 +87,9 @@ An example file could look like this:
     "ForwardTraffic":false,
     "verbose":false,
     "Authentication": true,
-    "jwkURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs"
+    "jwkURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs",
+    "ForwardBenchmark": false,
+    "BMSURL": "http://localhost:8081/sample"
 }
 ```
 

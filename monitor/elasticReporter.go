@@ -20,9 +20,10 @@ package monitor
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/DITAS-Project/TUBUtil"
+	util "github.com/DITAS-Project/TUBUtil"
 	"github.com/olivere/elastic"
 )
 
@@ -43,19 +44,30 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticR
 	util.SetLog(log)
 
 	if !config.IgnoreElastic {
-		util.WaitForAvailible(config.ElasticSearchURL, nil)
+		var client *elastic.Client
+		var err error
+		if config.ElasticBasicAuth {
+			_ = util.WaitForAvailibleWithAuth(config.ElasticSearchURL,[]string{config.ElasticUser,config.ElasticPassword}, nil)
 
-		client, err := elastic.NewClient(
-			elastic.SetURL(config.ElasticSearchURL),
-			elastic.SetSniff(false),
-		)
-
-		log.Debugf("using %s as ES endpoint", config.ElasticSearchURL)
+			client, err = elastic.NewClient(
+				elastic.SetURL(config.ElasticSearchURL),
+				elastic.SetSniff(false),
+				elastic.SetBasicAuth(config.ElasticUser, config.ElasticPassword),
+			)
+		} else {
+			_ = util.WaitForAvailible(config.ElasticSearchURL, nil)
+			client, err = elastic.NewClient(
+				elastic.SetURL(config.ElasticSearchURL),
+				elastic.SetSniff(false),
+			)
+		}
 
 		if err != nil {
 			log.Errorf("failed to connect to elastic serach %+v", err)
 			return ElasticReporter{}, err
 		}
+
+		log.Debugf("using %s as ES endpoint", config.ElasticSearchURL)
 
 		reporter := ElasticReporter{
 			Queue:    queue,
@@ -66,16 +78,16 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticR
 		}
 
 		return reporter, nil
-	} else {
-		reporter := ElasticReporter{
-			Queue:    queue,
-			VDCName:  config.VDCName,
-			QuitChan: make(chan bool),
-			ctx:      context.Background(),
-		}
-
-		return reporter, nil
 	}
+
+	reporter := ElasticReporter{
+		Queue:    queue,
+		VDCName:  config.VDCName,
+		QuitChan: make(chan bool),
+		ctx:      context.Background(),
+	}
+
+	return reporter, nil
 
 }
 
@@ -84,24 +96,9 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticR
 func (er *ElasticReporter) Start() {
 	go func() {
 		for {
-
 			select {
 			case work := <-er.Queue:
-				//TODO
-				log.Infof("reporting %s - %s", work.Client, work.Method)
-
-				work.Timestamp = time.Now()
-
-				if er.Client != nil {
-					_, err := er.Client.Index().Index(er.getElasticIndex()).Type("data").BodyJson(work).Do(er.ctx)
-
-					if err != nil {
-						log.Debug("failed to report mesurement to", err)
-					} else {
-						log.Debug("reported data to elastic!")
-					}
-				}
-
+				_ = er.sendMeterMessage(work)
 			case <-er.QuitChan:
 				// We have been asked to stop.
 				log.Info("worker stopping")
@@ -111,11 +108,26 @@ func (er *ElasticReporter) Start() {
 	}()
 }
 
+func (er *ElasticReporter) sendMeterMessage(work MeterMessage) error{
+	log.Infof("reporting %s - %s", work.Client, work.Method)
+	work.Timestamp = time.Now()
+	if er.Client != nil {
+		_, err := er.Client.Index().Index(er.getElasticIndex()).Type("data").BodyJson(work).Do(er.ctx)
+		if err != nil {
+			log.Debug("failed to report measurement to", err)
+			return err
+		} else {
+			log.Debug("reported data to elastic!")
+			return  nil
+		}
+	} else {
+		return fmt.Errorf("no client avaliblibe")
+	}
+}
+
 //Stop termintates this Worker
 func (er *ElasticReporter) Stop() {
-	go func() {
-		er.QuitChan <- true
-	}()
+	er.QuitChan <- true
 }
 
 func (er *ElasticReporter) getElasticIndex() string {
