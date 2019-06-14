@@ -64,6 +64,7 @@ func setup() {
 	viper.SetDefault("ElasticPassword", "")
 	viper.SetDefault("VDCName", "dummyVDC")
 	viper.SetDefault("Opentracing", false)
+	viper.SetDefault("CertificateLocation", "/tmp/rm")
 	viper.SetDefault("ZipkinEndpoint", "")
 	viper.SetDefault("UseACME", false)
 	viper.SetDefault("UseSelfSigned", true)
@@ -73,6 +74,7 @@ func setup() {
 	viper.SetDefault("UseIAM", false)
 	viper.SetDefault("IAMURL", "")
 	viper.SetDefault("JWKSURL", "")
+	viper.SetDefault("KeyCloakURL", "")
 	viper.SetDefault("testing", "false")
 
 	//setup cmd interface
