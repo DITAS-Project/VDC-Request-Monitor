@@ -39,6 +39,8 @@ type Configuration struct {
 	ElasticUser      string
 	ElasticPassword  string
 
+	CertificateLocation string
+
 	VDCName string // VDCName (used for the index name in elastic serach)
 
 	Opentracing    bool   //tells the proxy if a tracing header should be injected

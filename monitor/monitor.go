@@ -311,8 +311,13 @@ func (mon *RequestMonitor) Listen() {
 			}
 		}()
 	} else if mon.conf.UseSelfSigned {
-		cert := filepath.Join(mon.conf.configDir, "cert.pem")
-		key := filepath.Join(mon.conf.configDir, "key.pem")
+		certDir := mon.conf.configDir
+		if mon.conf.CertificateLocation != "" {
+			certDir = mon.conf.CertificateLocation
+		}
+
+		cert := filepath.Join(certDir, "cert.pem")
+		key := filepath.Join(certDir, "key.pem")
 
 		err := httpscerts.Check(cert, key)
 		if err != nil {
