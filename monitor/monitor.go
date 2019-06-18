@@ -253,15 +253,16 @@ func (mon *RequestMonitor) push(requestID string, message MeterMessage) {
 }
 
 func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
+	message.RequestID = requestID
+	message.Timestamp = time.Now()
+	message.VDCID = mon.conf.VDCName
+	message.BlueprintID = mon.conf.VDCName
+
 	if mon.conf.ForwardTraffic {
-		message.RequestID = requestID
-		message.Timestamp = time.Now()
 		mon.exchangeQueue <- message
 	}
 	if mon.conf.BenchmarkForward {
 		if message.sample {
-			message.RequestID = requestID
-			message.Timestamp = time.Now()
 			mon.benchmarkQueue <- message
 		}
 	}

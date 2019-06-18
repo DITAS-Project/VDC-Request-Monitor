@@ -64,7 +64,7 @@ func setup() {
 	viper.SetDefault("ElasticPassword", "")
 	viper.SetDefault("VDCName", "dummyVDC")
 	viper.SetDefault("Opentracing", false)
-	viper.SetDefault("CertificateLocation", "/tmp/rm")
+	viper.SetDefault("CertificateLocation", "/tmp")
 	viper.SetDefault("ZipkinEndpoint", "")
 	viper.SetDefault("UseACME", false)
 	viper.SetDefault("UseSelfSigned", true)

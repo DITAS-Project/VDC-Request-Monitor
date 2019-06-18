@@ -3,20 +3,21 @@ package monitor
 import (
 	"context"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"io"
 	"net/http"
 	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
-func startContainer(t *testing.T,mutex *sync.Mutex, containerName string, imageName string,ports []int, healthCheckUrl string) string {
+func startContainer(t *testing.T, mutex *sync.Mutex, containerName string, imageName string, ports []int, healthCheckUrl string) string {
 	mutex.Lock()
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
@@ -25,11 +26,11 @@ func startContainer(t *testing.T,mutex *sync.Mutex, containerName string, imageN
 		t.SkipNow()
 		return ""
 	}
-
+	containerName = fmt.Sprintf("%s_%s", containerName, t.Name())
 	t.Log("connected to docker")
 
 	//remove old one if present
-	args, err := filters.ParseFlag(fmt.Sprintf("name=%s",containerName), filters.NewArgs())
+	args, err := filters.ParseFlag(fmt.Sprintf("name=%s", containerName), filters.NewArgs())
 	if err != nil {
 		t.Error(err)
 		t.SkipNow()
@@ -52,9 +53,9 @@ func startContainer(t *testing.T,mutex *sync.Mutex, containerName string, imageN
 		t.Log("removed old container")
 	}
 
-	portMap :=  nat.PortSet{}
+	portMap := nat.PortSet{}
 	bindingMap := nat.PortMap{}
-	for _,portNumber := range ports {
+	for _, portNumber := range ports {
 		var port nat.Port
 		port = nat.Port(fmt.Sprintf("%d/tcp", portNumber))
 		portMap[port] = struct{}{}
@@ -62,34 +63,32 @@ func startContainer(t *testing.T,mutex *sync.Mutex, containerName string, imageN
 		bindingMap[port] = []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: fmt.Sprintf("%d",portNumber),
+				HostPort: fmt.Sprintf("%d", portNumber),
 			},
 		}
 	}
 
 	//create new container
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: imageName,
+		Image:        imageName,
 		ExposedPorts: portMap,
 	}, &container.HostConfig{
-		AutoRemove: true,
+		AutoRemove:   true,
 		PortBindings: bindingMap,
 	}, nil, containerName)
 	if err != nil {
 		t.Error(err)
 		return ""
 	}
-	t.Logf("created %s",containerName)
+	t.Logf("created %s", containerName)
 
 	//start
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{
-
-	}); err != nil {
+	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		t.Error(err)
 		return ""
 	}
-	t.Logf("started %s",containerName)
-	printContainerLogs(t,resp.ID)
+	t.Logf("started %s", containerName)
+	printContainerLogs(t, resp.ID)
 	//configure
 	_ = waitForConnection(healthCheckUrl, nil)
 	mutex.Unlock()
@@ -108,7 +107,7 @@ func stopContainer(t *testing.T, id string) {
 	}
 }
 
-func printContainerLogs(t *testing.T,id string){
+func printContainerLogs(t *testing.T, id string) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -132,14 +131,14 @@ func waitForConnection(url string, timeout *time.Duration) error {
 		for {
 			resp, err := http.Head(url)
 			if err != nil {
-				fmt.Printf("tried to connect to %s %+v waiting %d seconds\n",url, err, backoff)
+				fmt.Printf("tried to connect to %s %+v waiting %d seconds\n", url, err, backoff)
 
 			} else {
 				if resp.StatusCode <= 401 {
-					fmt.Printf("got resp from %s %d\n",url,resp.StatusCode)
+					fmt.Printf("got resp from %s %d\n", url, resp.StatusCode)
 					signal <- true
 				} else {
-					fmt.Printf("tried to connect to  %s  %d waiting %d seconds\n",url, resp.StatusCode, backoff)
+					fmt.Printf("tried to connect to  %s  %d waiting %d seconds\n", url, resp.StatusCode, backoff)
 				}
 			}
 			time.Sleep(backoff)
@@ -152,7 +151,7 @@ func waitForConnection(url string, timeout *time.Duration) error {
 		case <-signal:
 			return nil
 		case <-time.After(*timeout):
-			return fmt.Errorf("all timedout - %s could not be reached",url)
+			return fmt.Errorf("all timedout - %s could not be reached", url)
 		}
 	} else {
 		<-signal

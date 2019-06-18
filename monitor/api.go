@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -42,6 +43,9 @@ type Configuration struct {
 	CertificateLocation string
 
 	VDCName string // VDCName (used for the index name in elastic serach)
+
+	VDCID       string
+	BlueprintID string
 
 	Opentracing    bool   //tells the proxy if a tracing header should be injected
 	ZipkinEndpoint string //zipkin endpoint
@@ -86,9 +90,10 @@ type MeterMessage struct {
 
 type ExchangeMessage struct {
 	MeterMessage
-	RequestID string `json:"id"`
-
-	Timestamp time.Time `json:"@timestamp"`
+	RequestID   string    `json:"id"`
+	VDCID       string    `json:"vdcid"`
+	BlueprintID string    `json:"bpid"`
+	Timestamp   time.Time `json:"@timestamp"`
 
 	sample bool
 
@@ -108,11 +113,23 @@ func readConfig() (Configuration, error) {
 		return configuration, err
 	}
 
-	if viper.GetBool("verbose") {
-		viper.Debug()
-	}
-
 	_ = viper.Unmarshal(&configuration)
+
+	if viper.IsSet("VDCName") {
+		ids := strings.Split(viper.GetString("VDCName"), "-")
+
+		if !viper.IsSet("VDCID") {
+			if len(ids) >= 1 {
+				configuration.VDCID = ids[0]
+			}
+		}
+
+		if !viper.IsSet("BlueprintID") {
+			if len(ids) >= 2 {
+				configuration.BlueprintID = ids[1]
+			}
+		}
+	}
 
 	endpoint, err := url.Parse(configuration.Endpoint)
 	if err != nil {
@@ -126,11 +143,15 @@ func readConfig() (Configuration, error) {
 
 	if configuration.UseIAM {
 		//enable compability to old config files
-		if configuration.KeyCloakURL == "" && configuration.IAMURL != "" {
-			configuration.KeyCloakURL = configuration.IAMURL[:len(configuration.IAMURL)-31]
+		if configuration.KeyCloakURL == "" && configuration.JWKSURL != "" {
+			configuration.KeyCloakURL = configuration.JWKSURL[:len(configuration.JWKSURL)-31]
 
 			log.Infof("migrated to new config %s", configuration.KeyCloakURL)
 		}
+	}
+
+	if viper.GetBool("verbose") {
+		log.Print(configuration)
 	}
 
 	return configuration, nil
