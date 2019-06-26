@@ -134,21 +134,33 @@ func NewManger() (*RequestMonitor, error) {
 		mng.reporter = reporter
 
 		if configuration.ForwardTraffic {
-			exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
-			if err != nil {
-				log.Errorf("Failed to init exchange reporter %+v", err)
-				return nil, err
+			if configuration.ExchangeReporterURL == "" {
+				log.Error("forward traffic is set but no url specified, skipping...")
+				configuration.ForwardTraffic = false
+			} else {
+
+				exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
+				if err != nil {
+					log.Errorf("Failed to init exchange reporter %+v", err)
+					return nil, err
+				}
+				mng.exporter = exporter
 			}
-			mng.exporter = exporter
 		}
 
 		if configuration.BenchmarkForward {
-			benExporter, err := NewExchangeReporter(configuration.BMSURL, mng.benchmarkQueue)
-			if err != nil {
-				log.Errorf("Failed to init benchmark reporter %+v", err)
-				return nil, err
+			if configuration.BMSURL == "" {
+				log.Error("forward traffic is set but no url specified, skipping...")
+				configuration.BenchmarkForward = false
+			} else {
+
+				benExporter, err := NewExchangeReporter(configuration.BMSURL, mng.benchmarkQueue)
+				if err != nil {
+					log.Errorf("Failed to init benchmark reporter %+v", err)
+					return nil, err
+				}
+				mng.benExporter = benExporter
 			}
-			mng.benExporter = benExporter
 		}
 	}
 
