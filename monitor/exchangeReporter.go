@@ -56,8 +56,9 @@ func (er *ExchangeReporter) Start() {
 
 				if err != nil {
 					log.Debugf("failed to forward to :%+v", err)
+					return
 				}
-
+				
 				if resp.StatusCode > 200 {
 					msg, err := ioutil.ReadAll(resp.Body)
 					if err != nil {
