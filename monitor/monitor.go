@@ -20,9 +20,14 @@ package monitor
 
 import (
 	"context"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	atomic2 "go.uber.org/atomic"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -31,7 +36,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
@@ -72,6 +77,10 @@ type RequestMonitor struct {
 
 	cache ResouceCache
 
+	tombstone         *atomic2.Bool
+	forwardingAddress string
+	tombstoneKey      *rsa.PublicKey
+
 	iam *iam
 }
 
@@ -94,6 +103,10 @@ func NewManger() (*RequestMonitor, error) {
 		}
 	}
 
+	return initManager(configuration, blueprint)
+}
+
+func initManager(configuration Configuration, blueprint *spec.BlueprintType) (*RequestMonitor, error) {
 	mng := &RequestMonitor{
 		conf:           configuration,
 		blueprint:      blueprint,
@@ -103,8 +116,10 @@ func NewManger() (*RequestMonitor, error) {
 		iam:            NewIAM(configuration),
 		benchmarkQueue: make(chan ExchangeMessage, 10),
 	}
+	mng.tombstone = atomic2.NewBool(false)
+	readTombstoneKey(configuration.TombstonePublicKeyLocation, mng)
 
-	err = mng.initTracing()
+	err := mng.initTracing()
 	if err != nil {
 		log.Errorf("failed to init tracer %+v", err)
 	}
@@ -191,6 +206,25 @@ func NewManger() (*RequestMonitor, error) {
 	return mng, nil
 }
 
+func readTombstoneKey(keyLocation string, mng *RequestMonitor) {
+	tombstoneKey, err := ioutil.ReadFile(keyLocation)
+	if err != nil {
+		log.Error("failed to read tombstone signature key.")
+	} else {
+		block, _ := pem.Decode(tombstoneKey)
+		if block == nil {
+			log.Error("failed to read tombstone signature key, invalid PEM block")
+		} else {
+			key, err := x509.ParsePKIXPublicKey(block.Bytes)
+			if err != nil {
+				log.Errorf("failed to read tombstone signature key %+v", err)
+			} else {
+				mng.tombstoneKey = key.(*rsa.PublicKey)
+			}
+		}
+	}
+}
+
 func stateListener(url *url.URL, state int) {
 	if url != nil {
 		log.Printf("url:%s - state:%d", url.String(), state)
@@ -217,6 +251,20 @@ func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	if err != nil {
 		log.Errorf("error writing message! %+v", err)
 	}
+}
+
+func (mon *RequestMonitor) isTombStoned() bool {
+	return mon.tombstone.Load()
+}
+
+func (mon *RequestMonitor) setTombstone(url string) {
+	mon.forwardingAddress = url
+	mon.tombstone.Store(true)
+}
+
+func (mon *RequestMonitor) resetTombstone() {
+	mon.forwardingAddress = ""
+	mon.tombstone.Store(false)
 }
 
 func (mon *RequestMonitor) generateRequestID(remoteAddr string) string {
@@ -283,6 +331,7 @@ func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 //Listen will start all worker threads and wait for incoming requests
 func (mon *RequestMonitor) Listen() {
 
+	mon.initTombstoneAPI()
 	//start parallel reporter threads
 	mon.reporter.Start()
 

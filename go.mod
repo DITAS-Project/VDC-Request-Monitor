@@ -26,6 +26,7 @@ require (
 	github.com/go-openapi/swag v0.17.2 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/gorilla/mux v1.7.2
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
@@ -50,7 +51,9 @@ require (
 	github.com/spf13/viper v1.3.1
 	github.com/vulcand/oxy v0.0.0-20181130145254-c34b0c501e43
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
+	go.uber.org/atomic v1.3.2
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006 // indirect
+	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 )

@@ -33,6 +33,12 @@ import (
 )
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
+	if mon.isTombStoned() {
+		log.Info("Monitor is in TomeStoned State")
+		http.Redirect(w, req, mon.forwardingAddress, 308)
+		return
+	}
+
 	var requestID = mon.generateRequestID(req.RemoteAddr)
 
 	//validate Token

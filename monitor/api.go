@@ -40,7 +40,9 @@ type Configuration struct {
 	ElasticUser      string
 	ElasticPassword  string
 
-	CertificateLocation string
+	CertificateLocation string //the location certificates are read/written
+
+	TombstonePublicKeyLocation string // the location of the public rsa key used to sign tombstone commands
 
 	VDCName string // VDCName (used for the index name in elastic serach)
 
@@ -115,6 +117,10 @@ func readConfig() (Configuration, error) {
 
 	_ = viper.Unmarshal(&configuration)
 
+	return initConfiguration(configuration)
+}
+
+func initConfiguration(configuration Configuration) (Configuration, error) {
 	if viper.IsSet("VDCName") {
 		ids := strings.Split(viper.GetString("VDCName"), "-")
 
