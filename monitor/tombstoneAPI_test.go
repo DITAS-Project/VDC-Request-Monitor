@@ -23,25 +23,29 @@ import (
 func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	defer gock.Off()
 
+	//setup testing enviroment
 	viper.Set("verbose", true)
 	viper.Set("testing", true)
 
-	f, err := ioutil.TempFile("", "public.pem")
+	//generate a public and private key for signing tombstone requests
+	pemFile, err := ioutil.TempFile("", "public.pem")
 	if err != nil {
 		t.Fatalf("could not create key file %+v", err)
 	}
 
-	key, err := generateKeyPair(f)
+	//store the public key in tmp
+	key, err := generateKeyPair(pemFile)
 	if err != nil {
 		t.Fatalf("could not create key file %+v", err)
 	}
 
-	defer func() { _ = f.Close() }()
-	tombstonePath, err := filepath.Abs(f.Name())
+	defer func() { _ = pemFile.Close() }()
+	tombstonePath, err := filepath.Abs(pemFile.Name())
 	if err != nil {
 		t.Fatalf("could not create key file %+v", err)
 	}
 
+	//defualt config for this test
 	conf := Configuration{
 		configDir:                  ".",
 		Endpoint:                   "http://foo.com",
@@ -58,22 +62,26 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 		Port:                       8888,
 	}
 
+	//build config
 	conf, err = initConfiguration(conf)
 	if err != nil {
 		t.Errorf("failed to build config %+v", err)
 		return
 	}
 
+	//mock endpoint for valid requests, e.g. the running vdc before it is moved
 	gock.New(conf.Endpoint).
 		Reply(200).
 		JSON(map[string]string{"foo": "bar"})
 
+	//setting up the manger and all its functionality
 	mng, err := initManager(conf, nil)
 	if err != nil || mng == nil {
 		t.Error("failed to create request monitor")
 		return
 	}
 
+	//mock vdc request
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/test", conf.Endpoint), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -81,7 +89,7 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	rr := httptest.NewRecorder()
 	proxyMethod := http.HandlerFunc(mng.serve)
 
-	//Mock HTTP request
+	//test a normal request, tombstone is false and everything is normal
 	proxyMethod.ServeHTTP(rr, req)
 
 	result := rr.Result()
@@ -89,6 +97,7 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 		t.Fatal("request was normal should have worked")
 	}
 
+	//simulate a vdc movement.
 	tombstoneURL := "http://bar.com"
 	gock.New(tombstoneURL).
 		Reply(200).
@@ -97,11 +106,13 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	activateTombstoneMethod := http.HandlerFunc(mng.activateTombstone)
 	deactivateTombstoneMethod := http.HandlerFunc(mng.deactivateTombstone)
 
+	//generate the signature for this movement
 	signature, err := generateSignature(key, tombstoneURL)
 	if err != nil {
 		t.Fatalf("could not generate signature %+v", err)
 	}
 
+	//create a tombstone request
 	tombstoneRequest, err := http.NewRequest("POST", "http://localhost:3000/tombstone",
 		strings.NewReader(tombstoneURL))
 	if err != nil {
@@ -110,18 +121,19 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 
 	//should fail
 	rr = httptest.NewRecorder()
-	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL))
+	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL)) //this is done as because we reuse this
 	activateTombstoneMethod.ServeHTTP(rr, tombstoneRequest)
 	if rr.Result().StatusCode != http.StatusUnauthorized {
 		t.Fatal("security measure failed")
 	}
+
 	if mng.tombstone.Load() {
 		t.Fatal("tombstone should not be set!")
 	}
 
 	//should succeed
-	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL))
-	tombstoneRequest.Header.Set("signature", signature)
+	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL)) //this is done as because we reuse this
+	tombstoneRequest.Header.Set("signature", signature)                       //setting the actual signature, now the request should be valid
 	rr = httptest.NewRecorder()
 	activateTombstoneMethod.ServeHTTP(rr, tombstoneRequest)
 	if rr.Result().StatusCode != http.StatusOK {
@@ -140,13 +152,15 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 		t.Fatal("request was normal should have worked")
 	}
 
+	//send revive request
 	rr = httptest.NewRecorder()
-	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL))
+	tombstoneRequest.Body = ioutil.NopCloser(strings.NewReader(tombstoneURL)) //this is done as because we reuse this
 	deactivateTombstoneMethod.ServeHTTP(rr, tombstoneRequest)
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatal("method should have succeeded")
 	}
 
+	//should no longer be true
 	if mng.tombstone.Load() {
 		t.Fatal("tombstone should be unset set!")
 	}

@@ -171,6 +171,7 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 		return nil, errors.New("expecting JWT header to have string kid")
 	}
 
+	//TODO: XXX needs testing
 	if key := mon.iam.LookupKeyID(keyID); len(key) == 1 {
 		return key[0].Materialize()
 	}
@@ -202,6 +203,7 @@ func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
 		return nil, fmt.Errorf("could not parse token, %+v", err)
 	}
 
+	//TODO: XXX needs testing
 	if !token.Valid {
 		return nil, fmt.Errorf("token nolonger valid")
 	}
@@ -238,7 +240,7 @@ func (mon *RequestMonitor) extractOperationId(path string, method string) string
 }
 
 func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
-
+	//TODO: XXX needs testing
 	if resp == nil {
 		//in this case the request failed to produce a response
 		log.Warn("Empty response.")
@@ -280,6 +282,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 		return nil
 	}
 
+	//TODO: XXX needs testing
 	//read the body and reset the reader (otherwise it will not be availible to the client)
 	body, err := ioutil.ReadAll(resp.Body)
 

@@ -92,7 +92,7 @@ func NewManger() (*RequestMonitor, error) {
 		log.Error("could not read config!")
 		return nil, err
 	}
-
+	//TODO: XXX needs testing
 	blueprint, err := spec.ReadBlueprint("/etc/ditas/blueprint.json")
 
 	if err != nil {
@@ -231,6 +231,7 @@ func stateListener(url *url.URL, state int) {
 	}
 }
 
+//TODO: XXX needs testing
 func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	statusCode := http.StatusInternalServerError
 	if e, ok := err.(net.Error); ok {
@@ -277,6 +278,7 @@ func (mon *RequestMonitor) initTracing() error {
 		return nil
 	}
 
+	//TODO: XXX needs testing
 	if mon.conf.Opentracing {
 		log.Info("opentracing active")
 		// Create our HTTP collector.
@@ -312,6 +314,7 @@ func (mon *RequestMonitor) push(requestID string, message MeterMessage) {
 	mon.monitorQueue <- message
 }
 
+//TODO: XXX needs testing
 func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 	message.RequestID = requestID
 	message.Timestamp = time.Now()
