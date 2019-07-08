@@ -94,7 +94,7 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 
 	result := rr.Result()
 	if result.StatusCode > 200 {
-		t.Fatal("request was normal should have worked")
+		t.Fatalf("request was normal should have worked %d", result.StatusCode)
 	}
 
 	//simulate a vdc movement.

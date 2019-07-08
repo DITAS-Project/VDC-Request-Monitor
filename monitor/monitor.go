@@ -64,7 +64,7 @@ func SetLog(entty *logrus.Entry) {
 //RequestMonitor data struct
 type RequestMonitor struct {
 	conf      Configuration
-	blueprint *spec.BlueprintType
+	blueprint *spec.Blueprint
 	oxy       *forward.Forwarder
 
 	monitorQueue   chan MeterMessage
@@ -106,7 +106,7 @@ func NewManger() (*RequestMonitor, error) {
 	return initManager(configuration, blueprint)
 }
 
-func initManager(configuration Configuration, blueprint *spec.BlueprintType) (*RequestMonitor, error) {
+func initManager(configuration Configuration, blueprint *spec.Blueprint) (*RequestMonitor, error) {
 	mng := &RequestMonitor{
 		conf:           configuration,
 		blueprint:      blueprint,

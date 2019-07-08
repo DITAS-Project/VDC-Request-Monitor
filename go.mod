@@ -4,7 +4,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/DITAS-Project/KeycloakConfigClient v1.0.3
 	github.com/DITAS-Project/TUBUtil v1.0.2
-	github.com/DITAS-Project/blueprint-go v0.0.0-20190131104431-eebd846ff19c
+	github.com/DITAS-Project/blueprint-go v0.0.0-20190702100911-11805f455d69
 	github.com/DataDog/zstd v1.3.5 // indirect
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect

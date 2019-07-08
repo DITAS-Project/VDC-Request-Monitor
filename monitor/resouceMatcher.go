@@ -36,7 +36,7 @@ type ResouceCache struct {
 	pathMatcher []matcher
 }
 
-func NewResourceCache(blueprint *spec.BlueprintType) ResouceCache {
+func NewResourceCache(blueprint *spec.Blueprint) ResouceCache {
 	lfru, _ := lru.New2Q(128)
 	//!TODO: errohandling?
 

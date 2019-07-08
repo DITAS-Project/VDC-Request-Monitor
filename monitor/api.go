@@ -106,7 +106,6 @@ type ExchangeMessage struct {
 	ResponseHeader http.Header `json:"response.header,omitempty"`
 }
 
-//TODO: XXX needs testing
 func readConfig() (Configuration, error) {
 
 	err := viper.ReadInConfig()
@@ -122,19 +121,18 @@ func readConfig() (Configuration, error) {
 }
 
 func initConfiguration(configuration Configuration) (Configuration, error) {
-	//TODO: XXX needs testing
 	if viper.IsSet("VDCName") {
 		ids := strings.Split(viper.GetString("VDCName"), "-")
 
 		if !viper.IsSet("VDCID") {
 			if len(ids) >= 1 {
-				configuration.VDCID = ids[0]
+				configuration.VDCID = ids[1]
 			}
 		}
 
 		if !viper.IsSet("BlueprintID") {
 			if len(ids) >= 2 {
-				configuration.BlueprintID = ids[1]
+				configuration.BlueprintID = ids[0]
 			}
 		}
 	}
@@ -149,7 +147,6 @@ func initConfiguration(configuration Configuration) (Configuration, error) {
 	configuration.configDir = filepath.Dir(viper.ConfigFileUsed())
 	log.Infof("using this config %+v", configuration)
 
-	//TODO: XXX needs testing
 	if configuration.UseIAM {
 		//enable compability to old config files
 		if configuration.KeyCloakURL == "" && configuration.JWKSURL != "" {
