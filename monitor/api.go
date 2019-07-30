@@ -57,6 +57,7 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
+	ExchangeSecret      string
 
 	UseIAM      bool   //if true, authentication is required for all requests
 	KeyCloakURL string // url for keycloak

@@ -20,11 +20,16 @@ package monitor
 
 import (
 	"context"
+	"crypto"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"github.com/gbrlsnchs/jwt/v3"
+	"github.com/gorilla/mux"
 	atomic2 "go.uber.org/atomic"
 	"io"
 	"io/ioutil"
@@ -67,13 +72,13 @@ type RequestMonitor struct {
 	blueprint *spec.Blueprint
 	oxy       *forward.Forwarder
 
-	monitorQueue   chan MeterMessage
-	exchangeQueue  chan ExchangeMessage
-	benchmarkQueue chan ExchangeMessage
+	monitorQueue chan MeterMessage
 
 	reporter    ElasticReporter
-	exporter    ExchangeReporter
-	benExporter ExchangeReporter
+	exporter    ExchangeAgent
+	benExporter ExchangeAgent
+
+	exchangeSecret *jwt.HMACSHA
 
 	cache ResouceCache
 
@@ -108,13 +113,11 @@ func NewManger() (*RequestMonitor, error) {
 
 func initManager(configuration Configuration, blueprint *spec.Blueprint) (*RequestMonitor, error) {
 	mng := &RequestMonitor{
-		conf:           configuration,
-		blueprint:      blueprint,
-		monitorQueue:   make(chan MeterMessage, 10),
-		exchangeQueue:  make(chan ExchangeMessage, 10),
-		cache:          NewResourceCache(blueprint),
-		iam:            NewIAM(configuration),
-		benchmarkQueue: make(chan ExchangeMessage, 10),
+		conf:         configuration,
+		blueprint:    blueprint,
+		monitorQueue: make(chan MeterMessage, 10),
+		cache:        NewResourceCache(blueprint),
+		iam:          NewIAM(configuration),
 	}
 	mng.tombstone = atomic2.NewBool(false)
 	readTombstoneKey(configuration.TombstonePublicKeyLocation, mng)
@@ -149,12 +152,13 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 		mng.reporter = reporter
 
 		if configuration.ForwardTraffic {
+			mng.exchangeSecret = jwt.NewHS256([]byte(configuration.ExchangeSecret))
 			if configuration.ExchangeReporterURL == "" {
 				log.Error("forward traffic is set but no url specified, skipping...")
 				configuration.ForwardTraffic = false
 			} else {
 
-				exporter, err := NewExchangeReporter(configuration.ExchangeReporterURL, mng.exchangeQueue)
+				exporter, err := NewBufferedExchangeReporter(configuration.ExchangeReporterURL)
 				if err != nil {
 					log.Errorf("Failed to init exchange reporter %+v", err)
 					return nil, err
@@ -169,7 +173,7 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 				configuration.BenchmarkForward = false
 			} else {
 
-				benExporter, err := NewExchangeReporter(configuration.BMSURL, mng.benchmarkQueue)
+				benExporter, err := NewExchangeReporter(configuration.BMSURL)
 				if err != nil {
 					log.Errorf("Failed to init benchmark reporter %+v", err)
 					return nil, err
@@ -189,18 +193,6 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 				log.Infof("meter:%+v", msg)
 			}
 		}(mng.monitorQueue)
-		go func(q chan ExchangeMessage) {
-			for {
-				msg := <-q
-				log.Infof("exc:%+v", msg)
-			}
-		}(mng.exchangeQueue)
-		go func(q chan ExchangeMessage) {
-			for {
-				msg := <-q
-				log.Infof("bench:%+v", msg)
-			}
-		}(mng.benchmarkQueue)
 	}
 
 	return mng, nil
@@ -318,23 +310,67 @@ func (mon *RequestMonitor) push(requestID string, message MeterMessage) {
 func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 	message.RequestID = requestID
 	message.Timestamp = time.Now()
-	message.VDCID = mon.conf.VDCName
-	message.BlueprintID = mon.conf.VDCName
+	message.VDCID = mon.conf.VDCID
+	message.BlueprintID = mon.conf.BlueprintID
 
 	if mon.conf.ForwardTraffic {
-		mon.exchangeQueue <- message
+		mon.exporter.Add(message)
 	}
 	if mon.conf.BenchmarkForward {
 		if message.sample {
-			mon.benchmarkQueue <- message
+			mon.benExporter.Add(message)
 		}
 	}
+}
+
+func (mon *RequestMonitor) initMonitorAPI() {
+	var router = mux.NewRouter()
+
+	mon.initTombstoneAPI(router)
+	mon.initExchangeAPI(router)
+
+	fmt.Println("Running server!")
+	go func() {
+		err := http.ListenAndServe(":3000", router)
+		if err != nil {
+			log.Errorf("encountered error in tombstone api %+v", err)
+		}
+	}()
+}
+
+func (mon *RequestMonitor) readAndValidateSignature(r *http.Request) (bool, []byte) {
+	if mon.tombstoneKey == nil {
+		return false, nil
+	}
+	if r.Header.Get("signature") == "" {
+		return false, nil
+	}
+
+	signature, err := base64.StdEncoding.DecodeString(r.Header.Get("signature"))
+	if err != nil {
+		log.Debugf("failed to decode signature %+v", err)
+		return false, nil
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Debugf("failed read message body %+v", err)
+		return false, nil
+	}
+
+	hash := sha1.Sum(body)
+
+	err = rsa.VerifyPKCS1v15(mon.tombstoneKey, crypto.SHA1, hash[:], signature)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, body
 }
 
 //Listen will start all worker threads and wait for incoming requests
 func (mon *RequestMonitor) Listen() {
 
-	mon.initTombstoneAPI()
+	mon.initMonitorAPI()
 	//start parallel reporter threads
 	mon.reporter.Start()
 
@@ -342,6 +378,7 @@ func (mon *RequestMonitor) Listen() {
 		mon.exporter.Start()
 		defer mon.exporter.Stop()
 	}
+
 	if mon.conf.BenchmarkForward {
 		mon.benExporter.Start()
 		defer mon.benExporter.Stop()

@@ -140,18 +140,21 @@ func (mon *RequestMonitor) blockNonBlueprintRequests(w http.ResponseWriter, oper
 
 func (mon *RequestMonitor) prepareExchange(w http.ResponseWriter, req *http.Request) *ExchangeMessage {
 	if mon.conf.ForwardTraffic || mon.conf.BenchmarkForward {
-		body, err := ioutil.ReadAll(req.Body)
+		var body []byte
+		if req.Body != nil {
+			body, err := ioutil.ReadAll(req.Body)
 
-		if err != nil {
-			log.Printf("Error reading body: %v", err)
-			http.Error(w, "can't read body", http.StatusBadRequest)
+			if err != nil {
+				log.Printf("Error reading body: %v", err)
+				http.Error(w, "can't read body", http.StatusBadRequest)
+			}
+
+			//enact proxy request
+			req.ContentLength = int64(len(body))
+			req.Body = ioutil.NopCloser(bytes.NewReader(body))
 		}
 
-		//enact proxy request
-		req.ContentLength = int64(len(body))
-		req.Body = ioutil.NopCloser(bytes.NewReader(body))
-
-		var sample = (req.Header.Get("X-DITAS-Sample") == "1")
+		var sample = req.Header.Get("X-DITAS-Sample") == "1"
 		sample = sample && req.Method == http.MethodGet
 
 		return &ExchangeMessage{
