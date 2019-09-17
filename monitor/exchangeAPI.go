@@ -1,10 +1,9 @@
 package monitor
 
 import (
-	"fmt"
-	"github.com/gbrlsnchs/jwt/v3"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func (mon *RequestMonitor) initExchangeAPI(router *mux.Router) {
@@ -13,7 +12,7 @@ func (mon *RequestMonitor) initExchangeAPI(router *mux.Router) {
 
 func (mon *RequestMonitor) collectRawMessages(w http.ResponseWriter, r *http.Request) {
 	if mon.conf.ForwardTraffic {
-		if err := mon.Authenticate(r); err != nil {
+		if err := mon.Authenticate(r, mon.exchangeSecret); err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -28,18 +27,4 @@ func (mon *RequestMonitor) collectRawMessages(w http.ResponseWriter, r *http.Req
 	} else {
 		http.Error(w, "Function is Deactivated", http.StatusNoContent)
 	}
-}
-
-func (mon *RequestMonitor) Authenticate(req *http.Request) error {
-	token := req.Header.Get("Authorization")
-	if token != "" && len(token) > len("Bearer")+1 {
-		token = token[len("Bearer")+1:]
-		var payload jwt.Payload
-		_, err := jwt.Verify([]byte(token), mon.exchangeSecret, &payload)
-		if err != nil {
-			return fmt.Errorf("could not validate token %+v", err)
-		}
-		return nil
-	}
-	return fmt.Errorf("no auth header set")
 }

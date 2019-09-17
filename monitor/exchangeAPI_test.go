@@ -3,12 +3,13 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gbrlsnchs/jwt/v3"
-	"github.com/spf13/viper"
-	"gopkg.in/h2non/gock.v1"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/gbrlsnchs/jwt/v3"
+	"github.com/spf13/viper"
+	"gopkg.in/h2non/gock.v1"
 
 	"testing"
 )
@@ -22,21 +23,20 @@ func TestRequestMonitor_exchangeAPI(t *testing.T) {
 
 	//defualt config for this test
 	conf := Configuration{
-		configDir:                  ".",
-		Endpoint:                   "http://foo.com",
-		TombstonePublicKeyLocation: "",
-		VDCName:                    t.Name(), // VDCName (used for the index name in elastic serach)
-		Opentracing:                false,    //tells the proxy if a tracing header should be injected
-		UseACME:                    false,    //if true the proxy will aquire a LetsEncrypt certificate for the SSL connection
-		UseSelfSigned:              false,    //if UseACME is false, the proxy can use self signed certificates
-		ForwardTraffic:             true,     //if true all traffic is forwareded to the exchangeReporter
-		UseIAM:                     false,    //if true, authentication is required for all requests
-		BenchmarkForward:           false,
-		IgnoreElastic:              true,
-		Strict:                     false,
-		Port:                       8888,
-		ExchangeReporterURL:        "localhost:9999",
-		ExchangeSecret:             "notSoSecret",
+		configDir:           ".",
+		Endpoint:            "http://foo.com",
+		VDCName:             t.Name(), // VDCName (used for the index name in elastic serach)
+		Opentracing:         false,    //tells the proxy if a tracing header should be injected
+		UseACME:             false,    //if true the proxy will aquire a LetsEncrypt certificate for the SSL connection
+		UseSelfSigned:       false,    //if UseACME is false, the proxy can use self signed certificates
+		ForwardTraffic:      true,     //if true all traffic is forwareded to the exchangeReporter
+		UseIAM:              false,    //if true, authentication is required for all requests
+		BenchmarkForward:    false,
+		IgnoreElastic:       true,
+		Strict:              false,
+		Port:                8888,
+		ExchangeReporterURL: "localhost:9999",
+		ExchangeSecret:      "notSoSecret",
 	}
 
 	//build config
@@ -74,7 +74,6 @@ func TestRequestMonitor_exchangeAPI(t *testing.T) {
 	}
 
 	token, err := jwt.Sign(jwt.Payload{}, mng.exchangeSecret)
-
 	//get collected messages
 	collectMethod := http.HandlerFunc(mng.collectRawMessages)
 	collectRequest, err := http.NewRequest("GET", "http://localhost:3000/messages", nil)
@@ -89,6 +88,7 @@ func TestRequestMonitor_exchangeAPI(t *testing.T) {
 	}
 
 	collectRequest.Header.Set("Authorization", fmt.Sprintf("Bearer %s", string(token)))
+	fmt.Printf("Requuest:%+v\n", collectRequest)
 	rr = httptest.NewRecorder()
 	collectMethod.ServeHTTP(rr, collectRequest)
 	if rr.Code != http.StatusOK {
@@ -101,6 +101,7 @@ func TestRequestMonitor_exchangeAPI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read messages %+v", err)
 	}
+	fmt.Printf("Respnse:%s\n", string(bytes))
 	err = json.Unmarshal(bytes, &messages)
 	if err != nil {
 		t.Fatalf("failed to parse messages %+v", err)
@@ -110,5 +111,5 @@ func TestRequestMonitor_exchangeAPI(t *testing.T) {
 		t.Errorf("some messages are missing!")
 
 	}
-	t.Logf("got the following messages %+v", messages)
+	//t.Logf("got the following messages %+v", messages)
 }

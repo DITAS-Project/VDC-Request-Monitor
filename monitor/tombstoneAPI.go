@@ -18,8 +18,10 @@
 package monitor
 
 import (
-	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func (mon *RequestMonitor) initTombstoneAPI(router *mux.Router) {
@@ -28,10 +30,16 @@ func (mon *RequestMonitor) initTombstoneAPI(router *mux.Router) {
 }
 
 func (mon *RequestMonitor) activateTombstone(w http.ResponseWriter, r *http.Request) {
-	if ok, data := mon.readAndValidateSignature(r); !ok {
+	if err := mon.Authenticate(r, mon.tombstoneSecret); err != nil {
 		http.Error(w, "Unauthorized", 401)
 		return
 	} else {
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			logger.Debugf("failed to read url in tombstone %v", err)
+			http.Error(w, "Maleformed Request", http.StatusBadRequest)
+			return
+		}
 		url := string(data)
 
 		logger.Infof("tombstone triggered, rejecting all traffic to %s", url)
@@ -40,13 +48,11 @@ func (mon *RequestMonitor) activateTombstone(w http.ResponseWriter, r *http.Requ
 }
 
 func (mon *RequestMonitor) deactivateTombstone(w http.ResponseWriter, r *http.Request) {
-	if ok, _ := mon.readAndValidateSignature(r); !ok {
+	if err := mon.Authenticate(r, mon.tombstoneSecret); err != nil {
 		http.Error(w, "Unauthorized", 401)
 		return
 	} else {
-
 		logger.Info("tombstone reset, accepting traffic again")
-
 		mon.resetTombstone()
 	}
 }

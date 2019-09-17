@@ -20,24 +20,20 @@ package monitor
 
 import (
 	"context"
-	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/pem"
 	"fmt"
-	"github.com/gbrlsnchs/jwt/v3"
-	"github.com/gorilla/mux"
-	atomic2 "go.uber.org/atomic"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"time"
+
+	"github.com/gbrlsnchs/jwt/v3"
+	"github.com/gorilla/mux"
+	atomic2 "go.uber.org/atomic"
 
 	"github.com/spf13/viper"
 
@@ -54,6 +50,8 @@ import (
 	spec "github.com/DITAS-Project/blueprint-go"
 	uuid "github.com/satori/go.uuid"
 )
+
+const secretlength uint = 20
 
 var logger = logrus.New()
 var log = logrus.NewEntry(logger)
@@ -78,7 +76,8 @@ type RequestMonitor struct {
 	exporter    ExchangeAgent
 	benExporter ExchangeAgent
 
-	exchangeSecret *jwt.HMACSHA
+	exchangeSecret  *jwt.HMACSHA
+	tombstoneSecret *jwt.HMACSHA
 
 	cache ResouceCache
 
@@ -111,6 +110,16 @@ func NewManger() (*RequestMonitor, error) {
 	return initManager(configuration, blueprint)
 }
 
+func generateSecretString() string {
+
+	b := make([]byte, secretlength)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	s := fmt.Sprintf("%X", b)
+	return s
+}
+
 func initManager(configuration Configuration, blueprint *spec.Blueprint) (*RequestMonitor, error) {
 	mng := &RequestMonitor{
 		conf:         configuration,
@@ -120,8 +129,13 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 		iam:          NewIAM(configuration),
 	}
 	mng.tombstone = atomic2.NewBool(false)
-	readTombstoneKey(configuration.TombstonePublicKeyLocation, mng)
+	if configuration.TombstoneSecret == "" {
+		log.Errorf("tomeston secret is not set")
+		configuration.TombstoneSecret = generateSecretString()
+		logger.Infof("using generated secret: %s", configuration.TombstoneSecret)
+	}
 
+	mng.tombstoneSecret = jwt.NewHS256([]byte(configuration.TombstoneSecret))
 	err := mng.initTracing()
 	if err != nil {
 		log.Errorf("failed to init tracer %+v", err)
@@ -196,25 +210,6 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 	}
 
 	return mng, nil
-}
-
-func readTombstoneKey(keyLocation string, mng *RequestMonitor) {
-	tombstoneKey, err := ioutil.ReadFile(keyLocation)
-	if err != nil {
-		log.Error("failed to read tombstone signature key.")
-	} else {
-		block, _ := pem.Decode(tombstoneKey)
-		if block == nil {
-			log.Error("failed to read tombstone signature key, invalid PEM block")
-		} else {
-			key, err := x509.ParsePKIXPublicKey(block.Bytes)
-			if err != nil {
-				log.Errorf("failed to read tombstone signature key %+v", err)
-			} else {
-				mng.tombstoneKey = key.(*rsa.PublicKey)
-			}
-		}
-	}
 }
 
 func stateListener(url *url.URL, state int) {
@@ -338,33 +333,18 @@ func (mon *RequestMonitor) initMonitorAPI() {
 	}()
 }
 
-func (mon *RequestMonitor) readAndValidateSignature(r *http.Request) (bool, []byte) {
-	if mon.tombstoneKey == nil {
-		return false, nil
+func (mon *RequestMonitor) Authenticate(req *http.Request, secret *jwt.HMACSHA) error {
+	token := req.Header.Get("Authorization")
+	if token != "" && len(token) > len("Bearer")+1 {
+		token = token[len("Bearer")+1:]
+		var payload jwt.Payload
+		_, err := jwt.Verify([]byte(token), secret, &payload)
+		if err != nil {
+			return fmt.Errorf("could not validate token %+v", err)
+		}
+		return nil
 	}
-	if r.Header.Get("signature") == "" {
-		return false, nil
-	}
-
-	signature, err := base64.StdEncoding.DecodeString(r.Header.Get("signature"))
-	if err != nil {
-		log.Debugf("failed to decode signature %+v", err)
-		return false, nil
-	}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Debugf("failed read message body %+v", err)
-		return false, nil
-	}
-
-	hash := sha1.Sum(body)
-
-	err = rsa.VerifyPKCS1v15(mon.tombstoneKey, crypto.SHA1, hash[:], signature)
-	if err != nil {
-		return false, nil
-	}
-
-	return true, body
+	return fmt.Errorf("no auth header set")
 }
 
 //Listen will start all worker threads and wait for incoming requests

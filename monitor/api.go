@@ -42,7 +42,7 @@ type Configuration struct {
 
 	CertificateLocation string //the location certificates are read/written
 
-	TombstonePublicKeyLocation string // the location of the public rsa key used to sign tombstone commands
+	TombstoneSecret string // the preshared secret that is used to sign tombstone commands
 
 	VDCName string // VDCName (used for the index name in elastic serach)
 
