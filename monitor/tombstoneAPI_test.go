@@ -23,7 +23,7 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	//defualt config for this test
 	conf := Configuration{
 		configDir:        ".",
-		Endpoint:         "http://foo.com",
+		Endpoint:         "http://214.124.623.345:63340",
 		TombstoneSecret:  "RealySecretMessage",
 		VDCName:          t.Name(), // VDCName (used for the index name in elastic serach)
 		Opentracing:      false,    //tells the proxy if a tracing header should be injected
@@ -73,8 +73,8 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	}
 
 	//simulate a vdc movement.
-	tombstoneURL := "http://bar.com"
-	gock.New(tombstoneURL).
+	tombstoneURL := "123.124.123.213:8081"
+	gock.New(fmt.Sprintf("http://%s", tombstoneURL)).
 		Reply(200).
 		JSON(map[string]string{"foo": "bar"})
 
@@ -118,12 +118,17 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	}
 
 	//should be a redirect to tombstoneURL
+	req, err = http.NewRequest("GET", fmt.Sprintf("%s/test", conf.Endpoint), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	rr = httptest.NewRecorder()
 	proxyMethod.ServeHTTP(rr, req)
 	result = rr.Result()
 	if result.StatusCode != http.StatusPermanentRedirect {
 		t.Fatal("request was normal should have worked")
 	}
+	fmt.Println(result.Header.Get("Location"))
 
 	//send revive request
 	rr = httptest.NewRecorder()

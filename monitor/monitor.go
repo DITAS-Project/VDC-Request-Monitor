@@ -81,7 +81,8 @@ type RequestMonitor struct {
 
 	cache ResouceCache
 
-	tombstone         *atomic2.Bool
+	tombstone *atomic2.Bool
+
 	forwardingAddress string
 	tombstoneKey      *rsa.PublicKey
 

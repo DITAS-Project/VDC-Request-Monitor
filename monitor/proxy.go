@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -35,7 +36,11 @@ import (
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	if mon.isTombStoned() {
 		log.Info("Monitor is in TomeStoned State")
-		http.Redirect(w, req, mon.forwardingAddress, 308)
+		redirectURL, _ := url.Parse(req.URL.String())
+		redirectURL.Host = mon.forwardingAddress
+
+		http.Redirect(w, req, redirectURL.String(), 308)
+
 		return
 	}
 
