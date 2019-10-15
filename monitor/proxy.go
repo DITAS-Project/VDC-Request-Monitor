@@ -34,7 +34,9 @@ import (
 )
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
-	if mon.isTombStoned() {
+	preflight := req.Method == http.MethodOptions || req.Method == http.MethodHead
+
+	if mon.isTombStoned() && !preflight {
 		log.Info("Monitor is in TomeStoned State")
 		redirectURL, _ := url.Parse(req.URL.String())
 		redirectURL.Host = mon.forwardingAddress
@@ -47,7 +49,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	var requestID = mon.generateRequestID(req.RemoteAddr)
 
 	//validate Token
-	if mon.serveIAM(w, req) {
+	if mon.serveIAM(w, req) && !preflight {
 		return
 	}
 
@@ -96,11 +98,14 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string, operationID string) {
 	//inject tracing header
 	if mon.conf.Opentracing {
-		_ = opentracing.GlobalTracer().Inject(
+		err := opentracing.GlobalTracer().Inject(
 			opentracing.StartSpan("VDC-Request").Context(),
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(header),
 		)
+		if err != nil {
+			log.Debugf("could not trace due to %+v\n", err)
+		}
 	}
 	//inject looging header
 	header.Set("X-DITAS-RequestID", requestID)

@@ -43,9 +43,16 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 		t.Errorf("failed to build config %+v", err)
 		return
 	}
+	matcher := gock.NewBasicMatcher()
+
+	// Add a custom match function
+	matcher.Add(func(req *http.Request, ereq *gock.Request) (bool, error) {
+		return true, nil
+	})
 
 	//mock endpoint for valid requests, e.g. the running vdc before it is moved
 	gock.New(conf.Endpoint).
+		SetMatcher(matcher).
 		Reply(200).
 		JSON(map[string]string{"foo": "bar"})
 
@@ -72,6 +79,17 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 		t.Fatalf("request was normal should have worked %d", result.StatusCode)
 	}
 
+	req, err = http.NewRequest("OPTIONS", fmt.Sprintf("%s/test", conf.Endpoint), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxyMethod.ServeHTTP(rr, req)
+
+	result = rr.Result()
+	if result.StatusCode > 200 {
+		t.Fatalf("request was normal should have worked %d", result.StatusCode)
+	}
+
 	//simulate a vdc movement.
 	tombstoneURL := "123.124.123.213:8081"
 	gock.New(fmt.Sprintf("http://%s", tombstoneURL)).
@@ -82,7 +100,6 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 	deactivateTombstoneMethod := http.HandlerFunc(mng.deactivateTombstone)
 
 	//generate the signature for this movement
-	//TODO: generate token
 	token, err := jwt.Sign(jwt.Payload{}, mng.tombstoneSecret)
 	tokenString := fmt.Sprintf("Bearer %s", string(token))
 	//create a tombstone request
@@ -115,6 +132,17 @@ func TestRequestMonitor_initTombstoneAPI(t *testing.T) {
 
 	if !mng.tombstone.Load() {
 		t.Fatal("tombstone should be set!")
+	}
+	//sould still work
+	req, err = http.NewRequest("OPTIONS", fmt.Sprintf("%s/test", conf.Endpoint), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxyMethod.ServeHTTP(rr, req)
+
+	result = rr.Result()
+	if result.StatusCode > 200 {
+		t.Fatalf("request was normal should have worked %d", result.StatusCode)
 	}
 
 	//should be a redirect to tombstoneURL
