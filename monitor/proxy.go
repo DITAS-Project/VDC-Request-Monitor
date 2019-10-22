@@ -34,6 +34,10 @@ import (
 )
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
+	if mon.demo(w, req) {
+		return
+	}
+
 	preflight := req.Method == http.MethodOptions || req.Method == http.MethodHead
 
 	if mon.isTombStoned() && !preflight {

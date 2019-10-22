@@ -28,6 +28,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -83,6 +85,8 @@ type RequestMonitor struct {
 
 	tombstone *atomic2.Bool
 
+	infrastructureType string
+
 	forwardingAddress string
 	tombstoneKey      *rsa.PublicKey
 
@@ -98,17 +102,54 @@ func NewManger() (*RequestMonitor, error) {
 		return nil, err
 	}
 	//TODO: XXX needs testing
-	blueprint, err := spec.ReadBlueprint("/etc/ditas/blueprint.json")
+	blueprint, _ := loadBlueprint(configuration)
 
+	return initManager(configuration, blueprint)
+}
+
+func loadBlueprint(configuration Configuration) (*spec.Blueprint, error) {
+	location, err := blueprintLocation(configuration)
+	if err != nil {
+		if !configuration.Strict {
+			log.Warn(err.Error())
+		} else {
+			log.Fatal(err.Error())
+		}
+		return nil, err
+	}
+
+	blueprint, err := spec.ReadBlueprint(location)
 	if err != nil {
 		if !configuration.Strict {
 			log.Warn("could not read blueprint (monitoring quality will be degraded)")
 		} else {
 			log.Fatal("can't run in strict mode without a blueprint")
 		}
+		return nil, err
+	}
+	return blueprint, nil
+}
+
+const ditasConfigDir = "/etc/ditas/"
+
+func blueprintLocation(conf Configuration) (string, error) {
+
+	p, _ := filepath.Abs(path.Join(ditasConfigDir, "blueprint.json"))
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		return p, nil
+	} else {
+		log.Infof("no blueprint @ %s", p)
 	}
 
-	return initManager(configuration, blueprint)
+	p, _ = filepath.Abs(path.Join(conf.configDir, "blueprint.json"))
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		return p, nil
+	} else {
+		log.Infof("no blueprint @ %s", p)
+	}
+
+	return "", fmt.Errorf("could not locate a bluerint")
+
 }
 
 func generateSecretString() string {
@@ -208,6 +249,10 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 				log.Infof("meter:%+v", msg)
 			}
 		}(mng.monitorQueue)
+	}
+
+	if mng.setupDemo() != nil {
+		log.Fatalf("running in DEMO mode but could not Setup!")
 	}
 
 	return mng, nil

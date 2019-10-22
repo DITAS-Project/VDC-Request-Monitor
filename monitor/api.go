@@ -76,6 +76,10 @@ type Configuration struct {
 
 	Port    int
 	SSLPort int
+
+	InfrastructureID string //Infrastructure ID
+
+	DemoMode bool
 }
 
 type MeterMessage struct {
