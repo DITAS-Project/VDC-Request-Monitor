@@ -37,11 +37,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	preflight := req.Method == http.MethodOptions || req.Method == http.MethodHead
 
 	if mon.isTombStoned() && !preflight {
-		log.Info("Monitor is in TomeStoned State")
-		redirectURL, _ := url.Parse(req.URL.String())
-		redirectURL.Host = mon.forwardingAddress
-
-		http.Redirect(w, req, redirectURL.String(), 308)
+		mon.tombstoneResponse(req, w)
 
 		return
 	}
@@ -93,6 +89,25 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 
 		mon.forward(requestID, *exchange)
 	}
+}
+
+func (mon *RequestMonitor) tombstoneResponse(req *http.Request, w http.ResponseWriter) {
+	log.Info("Monitor is in TomeStoned State")
+	redirectURL, _ := url.Parse(req.URL.String())
+	redirectURL.Host = mon.forwardingAddress
+	if mon.conf.InjectTombstoneHeader {
+		if mon.conf.TombstoneHeader != nil {
+			for k, v := range mon.conf.TombstoneHeader {
+				w.Header().Add(k, v)
+			}
+		} else {
+			log.Warnf("!Security Warning! using default tombstone headers")
+			w.Header().Add("Access-Control-Allow-Headers", "authorization,content-type")
+			w.Header().Add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE")
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+		}
+	}
+	http.Redirect(w, req, redirectURL.String(), 308)
 }
 
 func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string, operationID string) {

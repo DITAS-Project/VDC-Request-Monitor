@@ -75,7 +75,8 @@ func setup() {
 	viper.SetDefault("IAMURL", "")
 	viper.SetDefault("JWKSURL", "")
 	viper.SetDefault("KeyCloakURL", "")
-	viper.SetDefault("testing", "false")
+	viper.SetDefault("testing", false)
+	viper.SetDefault("InjectTombstoneHeader", true)
 
 	//setup cmd interface
 	flag.String("elastic", viper.GetString("ElasticSearchURL"), "used to define the elasticURL")
