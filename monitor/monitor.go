@@ -85,6 +85,7 @@ type RequestMonitor struct {
 
 	forwardingAddress string
 	tombstoneKey      *rsa.PublicKey
+	circuits          []*circuitBreakingListener
 
 	iam *iam
 }
@@ -128,7 +129,9 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 		monitorQueue: make(chan MeterMessage, 10),
 		cache:        NewResourceCache(blueprint),
 		iam:          NewIAM(configuration),
+		circuits:     make([]*circuitBreakingListener, 0),
 	}
+
 	mng.tombstone = atomic2.NewBool(false)
 	if configuration.TombstoneSecret == "" {
 		log.Errorf("tomeston secret is not set")
@@ -242,6 +245,21 @@ func handleError(w http.ResponseWriter, req *http.Request, err error) {
 	}
 }
 
+func (mon *RequestMonitor) AddCircuit(listener *circuitBreakingListener) {
+	mon.circuits = append(mon.circuits, listener)
+}
+
+func (mon *RequestMonitor) tripCircuits() {
+	if mon.conf.ViolentConnectionDeath {
+		for _, c := range mon.circuits {
+			err := c.FlushAllConnections()
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	}
+}
+
 func (mon *RequestMonitor) isTombStoned() bool {
 	return mon.tombstone.Load()
 }
@@ -249,11 +267,15 @@ func (mon *RequestMonitor) isTombStoned() bool {
 func (mon *RequestMonitor) setTombstone(url string) {
 	mon.forwardingAddress = url
 	mon.tombstone.Store(true)
+
+	mon.tripCircuits()
 }
 
 func (mon *RequestMonitor) resetTombstone() {
 	mon.forwardingAddress = ""
 	mon.tombstone.Store(false)
+
+	mon.tripCircuits()
 }
 
 func (mon *RequestMonitor) generateRequestID(remoteAddr string) string {
@@ -348,6 +370,68 @@ func (mon *RequestMonitor) Authenticate(req *http.Request, secret *jwt.HMACSHA) 
 	return fmt.Errorf("no auth header set")
 }
 
+// circuitBreakingListener wraps a net.Listener
+// allowing us to forceCose all open connections if the circuit is
+// triggered.
+type circuitBreakingListener struct {
+	net.Listener
+
+	activeConn map[net.Conn]struct{}
+}
+
+func (mon *RequestMonitor) newCircuit(list net.Listener) *circuitBreakingListener {
+	circuit := &circuitBreakingListener{
+		list,
+		make(map[net.Conn]struct{}),
+	}
+
+	mon.AddCircuit(circuit)
+
+	return circuit
+}
+
+type breakingConn struct {
+	net.Conn
+	circuit *circuitBreakingListener
+}
+
+func (conn *breakingConn) Close() error {
+	//remove conn from poll
+	log.Debugf("closed conn : %+v <-> %+v", conn.LocalAddr(), conn.RemoteAddr())
+	delete(conn.circuit.activeConn, conn)
+	return conn.Conn.Close()
+}
+
+func (l *circuitBreakingListener) FlushAllConnections() error {
+	errors := make([]error, 0)
+	for conn, _ := range l.activeConn {
+		err := conn.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("encountered errors when flushing connections %+v", errors)
+	} else {
+		return nil
+	}
+
+}
+
+func (l *circuitBreakingListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+
+	bacon := &breakingConn{conn, l}
+
+	if conn != nil {
+		log.Debugf("opened conn : %+v <-> %+v", conn.LocalAddr(), conn.RemoteAddr())
+		l.activeConn[bacon] = struct{}{}
+	}
+
+	return bacon, err
+}
+
 //Listen will start all worker threads and wait for incoming requests
 func (mon *RequestMonitor) Listen() {
 
@@ -367,74 +451,102 @@ func (mon *RequestMonitor) Listen() {
 
 	defer mon.reporter.Stop()
 
-	var m *autocert.Manager
-	if mon.conf.UseACME {
-
-		m = &autocert.Manager{
-			Email:  "werner@tu-berlin.de",
-			Prompt: autocert.AcceptTOS,
-			HostPolicy: func(ctx context.Context, host string) error {
-				//TODO: add sensible host model
-				return nil
-			},
-			Cache: autocert.DirCache(".certs"),
-		}
-
-		httpsServer := &http.Server{
-			Addr:      fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
-			Handler:   http.HandlerFunc(mon.serve),
-			TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
-		}
-
-		go func() {
-			log.Infof("using %d", viper.GetInt("SSLPort"))
-			err := httpsServer.ListenAndServeTLS("", "")
-			if err != nil {
-				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
-			}
-		}()
-	} else if mon.conf.UseSelfSigned {
-		certDir := mon.conf.configDir
-		if mon.conf.CertificateLocation != "" {
-			certDir = mon.conf.CertificateLocation
-		}
-
-		cert := filepath.Join(certDir, "cert.pem")
-		key := filepath.Join(certDir, "key.pem")
-
-		err := httpscerts.Check(cert, key)
-		if err != nil {
-			log.Info("could not load self signed keys - generationg some")
-			err = httpscerts.Generate(cert, key, "127.0.0.1:443")
-			if err != nil {
-				log.Fatal("Error: Couldn't create https certs.")
-			}
-		}
-		httpsServer := &http.Server{
-			Addr:    fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
-			Handler: http.HandlerFunc(mon.serve),
-		}
-		go func() {
-			log.Infof("using %d", viper.GetInt("SSLPort"))
-			err := httpsServer.ListenAndServeTLS(cert, key)
-			if err != nil {
-				log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
-			}
-		}()
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("Port")))
+	if err != nil {
+		log.Error("failed to listen ")
 	}
+
+	httpCircuit := mon.newCircuit(listener)
 
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf(":%d", viper.GetInt("Port")),
 	}
 
-	if m != nil {
-		httpServer.Handler = m.HTTPHandler(http.HandlerFunc(mon.serve))
-	} else {
-		httpServer.Handler = http.HandlerFunc(mon.serve)
+	httpServer.Handler = http.HandlerFunc(mon.serve)
+
+	if mon.conf.UseACME || mon.conf.UseSelfSigned {
+		sslListener, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("SLLPort")))
+		if err != nil {
+			log.Error("failed to listen ")
+		}
+
+		sslCircuit := mon.newCircuit(sslListener)
+
+		if mon.conf.UseACME {
+			httpsServer, cert, key, handler := createAutoCertServer(mon)
+
+			//XXX: SET the ACME handler to accept HTTP challanges
+			httpServer.Handler = handler
+
+			go serveAndListenTLS(httpsServer, cert, key, sslCircuit)
+		} else if mon.conf.UseSelfSigned {
+			cert, key, httpsServer := createHTTPSServes(mon)
+
+			go serveAndListenTLS(httpsServer, cert, key, sslCircuit)
+		}
 	}
-	log.Infof("using %d", viper.GetInt("Port"))
+
 	log.Info("request-monitor ready")
-	err := httpServer.ListenAndServe()
+
+	serveAndListen(httpServer, httpCircuit)
+}
+
+func serveAndListen(httpServer *http.Server, httpCircuit *circuitBreakingListener) {
+	log.Infof("using %d", viper.GetInt("Port"))
+
+	err := httpServer.Serve(httpCircuit)
+	if err != nil {
+		log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
+	}
+}
+
+func createHTTPSServes(mon *RequestMonitor) (string, string, *http.Server) {
+	certDir := mon.conf.configDir
+	if mon.conf.CertificateLocation != "" {
+		certDir = mon.conf.CertificateLocation
+	}
+	cert := filepath.Join(certDir, "cert.pem")
+	key := filepath.Join(certDir, "key.pem")
+	err := httpscerts.Check(cert, key)
+	if err != nil {
+		log.Info("could not load self signed keys - generationg some")
+		err = httpscerts.Generate(cert, key, "127.0.0.1:443")
+		if err != nil {
+			log.Fatal("Error: Couldn't create https certs.")
+		}
+	}
+	httpsServer := &http.Server{
+		Addr:    fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
+		Handler: http.HandlerFunc(mon.serve),
+	}
+	return cert, key, httpsServer
+}
+
+func createAutoCertServer(mon *RequestMonitor) (*http.Server, string, string, http.Handler) {
+	m := &autocert.Manager{
+		Email:  "werner@tu-berlin.de",
+		Prompt: autocert.AcceptTOS,
+		HostPolicy: func(ctx context.Context, host string) error {
+			//TODO: add sensible host model
+			return nil
+		},
+		Cache: autocert.DirCache(".certs"),
+	}
+	httpsServer := &http.Server{
+		Addr:      fmt.Sprintf(":%d", viper.GetInt("SSLPort")),
+		Handler:   http.HandlerFunc(mon.serve),
+		TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+	}
+	cert := ""
+	key := ""
+
+	return httpsServer, cert, key, m.HTTPHandler(http.HandlerFunc(mon.serve))
+}
+
+func serveAndListenTLS(httpsServer *http.Server, cert string, key string, httpsCircuit *circuitBreakingListener) {
+	log.Infof("using %d", viper.GetInt("SSLPort"))
+
+	err := httpsServer.ServeTLS(httpsCircuit, cert, key)
 	if err != nil {
 		log.Errorf("httpsSrv.ListendAndServeTLS() failed with %s", err)
 	}

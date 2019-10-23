@@ -42,9 +42,10 @@ type Configuration struct {
 
 	CertificateLocation string //the location certificates are read/written
 
-	TombstoneSecret       string // the preshared secret that is used to sign tombstone commands
-	InjectTombstoneHeader bool
-	TombstoneHeader       map[string]string
+	TombstoneSecret        string // the preshared secret that is used to sign tombstone commands
+	InjectTombstoneHeader  bool
+	TombstoneHeader        map[string]string
+	ViolentConnectionDeath bool
 
 	VDCName string // VDCName (used for the index name in elastic serach)
 
