@@ -84,6 +84,7 @@ type RequestMonitor struct {
 	cache ResouceCache
 
 	tombstone *atomic2.Bool
+	death     *atomic2.Bool
 
 	infrastructureType string
 
@@ -369,6 +370,7 @@ func (mon *RequestMonitor) initMonitorAPI() {
 
 	mon.initTombstoneAPI(router)
 	mon.initExchangeAPI(router)
+	mon.initDemoAPI(router)
 
 	fmt.Println("Running server!")
 	go func() {

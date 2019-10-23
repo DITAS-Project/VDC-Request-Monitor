@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 	"time"
 )
@@ -16,7 +17,24 @@ func (mon *RequestMonitor) setupDemo() error {
 	return nil
 }
 
+func (mon *RequestMonitor) initDemoAPI(router *mux.Router) {
+	router.HandleFunc("/kill", mon.kill).Methods("POST")
+	router.HandleFunc("/relife", mon.relife).Methods("POST")
+}
+
+func (mon *RequestMonitor) kill(w http.ResponseWriter, req *http.Request) {
+	mon.death.Store(true)
+}
+
+func (mon *RequestMonitor) relife(w http.ResponseWriter, req *http.Request) {
+	mon.death.Store(false)
+}
+
 func (mon *RequestMonitor) demo(w http.ResponseWriter, req *http.Request) bool {
+	if mon.death.Load() {
+		return true
+	}
+
 	if mon.conf.DemoMode {
 		switch mon.infrastructureType {
 		case "edge":
