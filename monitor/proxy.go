@@ -107,6 +107,7 @@ func (mon *RequestMonitor) tombstoneResponse(req *http.Request, w http.ResponseW
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 		}
 	}
+	w.Header().Add("X-VDC-Location", fmt.Sprintf("%s://%s", req.URL.Scheme, mon.forwardingAddress))
 	http.Redirect(w, req, redirectURL.String(), 308)
 }
 
