@@ -59,18 +59,31 @@ For that make sure you have an elastic search running locally at the default por
 
 ## Configuration
 To configure the agent, you can specify the following values in a JSON file:
+### ELasticsearch 
  * ElasticSearchURL => The URL that all aggregated data is sent to
+ * ElasticBasicAuth => boolean to indicate if authentication for the elastic is required
+ * ElasticUser => username for the elasticsearch
+ * ElasticPassword => password for the elasticsearch
+ * IgnoreElastic => boolean which disables the sending of data to the elastic search (recommended only for debugging)
+### General
  * VDCName => the Name used to store the information under
  * Endpoint => the address of the service that traffic is forwarded to
+ * Port => the port the monitor is running on
+ * SSLPort => the SSL port of the monitor
+ ### Tracing
  * Opentracing => indicates if an open tracing header should be set on every incoming request and if the frames should be sent to Zipkin
  * ZipkinEndpoint => the address of the Zipkin collector
+ ### Certificates
  * UseACME => use lets encrypt to generate certificates for https
  * UseSelfSigned => let the agent generate self-signed certificates or use the ones provided in the config directory (same as the location of the config file). The files the agent is looking for are `cert.pem` and `key.pem`.
+ ### Logging
  * ForwardTraffic => allow the agent to forward all incoming and outgoing data to a secondary service for, e.g., auditing.
  * ExchangeReporterURL => if the *ForwardTraffic* is enabled, send the data to this location.
  * verbose => boolean to indicate if the agent should use verbose logging (recommended for debugging)
- * Authentication => boolean to indicate if the agent should check Authentication Headers
- * jwkURL => URL to get keys for JWT validation
+ ### User Authentication
+ * UseIAM => boolean to indicate if the agent should check Authentication Headers
+ * KeyCloakURL => URL to get keys for JWT validation
+ ### Benchmarking
  * ForwardBenchmark => boolean to indicate if agent should report data to the BenchmarkScheduler
  * BMSURL => URL of the BenchmarkScheduler where the data should be reported to 
 
@@ -86,8 +99,8 @@ An example file could look like this:
     "UseSelfSigned":true,
     "ForwardTraffic":false,
     "verbose":false,
-    "Authentication": true,
-    "jwkURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs",
+    "UseIAM": true,
+    "KeyCloakURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs",
     "ForwardBenchmark": false,
     "BMSURL": "http://localhost:8081/sample"
 }
