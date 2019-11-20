@@ -135,6 +135,9 @@ func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string
 // return true if this needs to block the flow, false oterhwise
 func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
 	if mon.conf.UseIAM {
+		if mon.conf.DANGERZONE {
+			return false
+		}
 		//TODO handle X-DITAS-Callback
 		if req.Method == http.MethodOptions || req.Method == http.MethodHead {
 			return false

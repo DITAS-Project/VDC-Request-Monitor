@@ -1,0 +1,200 @@
+swagger: '2.0'
+info:
+  description: ''
+  version: 1.0.0
+  title: DITAS Request Monitor Configuration Plane
+  termsOfService: 'http://swagger.io/terms/'
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+basePath: /
+schemes:
+  - https
+paths:
+  '/tombstone':
+    post:
+      tags:
+        - computation movement
+      summary: disables this request monitor
+      description: >-
+        This call triggeres the tombestone mode of the RM. After activation, the
+        RM will only respond with a 301 rediect call to all incomming connection
+        request instead of forwarding them to the underling service.
+      consumes:
+        - 'text/string'
+      responses:
+        '200':
+          description: mode activated
+          headers:
+            Authorization:
+              type: string
+              description: Computation Movement Token
+        '401':
+          description: invalid credentials
+    parameters:
+      - in: body
+        name: url
+        required: true
+        schema:
+          type: string
+
+  '/revive':
+    post:
+      tags:
+        - computation movement
+      summary: disables this request monitor
+      description: >-
+        This call resets the tombestone mode of the RM. After activation, the
+        RM again respond normally to all requests.
+      responses:
+        '200':
+          description: mode deactivated
+          headers:
+            Authorization:
+              type: string
+              description: Computation Movement Token
+        '401':
+          description: invalid credentials
+
+  '/messages':
+    get:
+      tags:
+        - DUE@VDC
+      summary: disables this request monitor
+      description: >-
+        This call returns the latest request/response mesurementes.
+      produces:
+        - application/json
+
+      responses:
+        '200':
+          description: monitor messages
+          headers:
+            Authorization:
+              type: string
+              description: DUE Token
+          schema:
+            type: array
+            items:
+              tpye: object
+              properties:
+                RequestID:
+                  type: string
+                OperationID:
+                  type: string
+                Timestamp:
+                  type: string
+                RequestLenght:
+                  type: integer
+                Kind:
+                  type: string
+                Client:
+                  type: string
+                Method:
+                  type: string
+                RequestTime:
+                  type: integer
+                ResponseCode:
+                  type: integer
+                ResponseLength:
+                  type: integer
+                VDCID:
+                  type: string
+                BlueprintID:
+                  type: string
+                sample:
+                  type: boolean
+                RequestBody:
+                  type: string
+                RequestHeader:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: array
+                        items:
+                          type: string
+                ResponseBody:
+                  type: string
+                ResponseHeader:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: array
+                        items:
+                          type: string
+
+        '401':
+          description: invalid credentials
+  '/reset':
+    post:
+      tags:
+        - demo
+      summary: resets monitor to normal operation
+      responses:
+        '200':
+          description: OK
+          headers:
+            Authorization:
+              type: string
+              description: Demo Token
+        '401':
+          description: invalid credentials
+  '/kill':
+    post:
+      tags:
+        - demo
+      summary: turns the rm unresponsive to all requests
+      responses:
+        '200':
+          description: OK
+          headers:
+            Authorization:
+              type: string
+              description: Demo Token
+        '401':
+          description: invalid credentials
+  '/slow':
+    post:
+      tags:
+        - demo
+      summary: slows down all requests by a given amount
+      consumes:
+        - 'text/string'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Authorization:
+              type: string
+              description: Demo Token
+        '401':
+          description: invalid credentials
+    parameters:
+      - in: body
+        name: slowdown
+        required: true
+        schema:
+          type: integer
+          example: 2000
+  '/failing':
+    post:
+      tags:
+        - demo
+      summary: returns all requests with failing states
+      responses:
+        '200':
+          description: OK
+          headers:
+            Authorization:
+              type: string
+              description: Demo Token
+        '401':
+          description: invalid credentials

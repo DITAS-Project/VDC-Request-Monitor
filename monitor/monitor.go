@@ -80,6 +80,7 @@ type RequestMonitor struct {
 
 	exchangeSecret  *jwt.HMACSHA
 	tombstoneSecret *jwt.HMACSHA
+	demoSecret      *jwt.HMACSHA
 
 	cache ResouceCache
 
@@ -93,6 +94,9 @@ type RequestMonitor struct {
 	circuits          []*circuitBreakingListener
 
 	iam *iam
+
+	demoSlow time.Duration
+	demoFail bool
 }
 
 //NewManger Creates a new logging, tracing RequestMonitor
@@ -164,6 +168,11 @@ func generateSecretString() string {
 }
 
 func initManager(configuration Configuration, blueprint *spec.Blueprint) (*RequestMonitor, error) {
+
+	if configuration.DANGERZONE {
+		log.Warnln("YOU ARE RUNNING WITHOUT AUTHENTICATION! THIS IS DANGEROUS AND SHOULD ONLY BE DONE FOR TESTING!")
+	}
+
 	mng := &RequestMonitor{
 		conf:         configuration,
 		blueprint:    blueprint,
@@ -179,8 +188,15 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 		configuration.TombstoneSecret = generateSecretString()
 		logger.Infof("using generated secret: %s", configuration.TombstoneSecret)
 	}
-
 	mng.tombstoneSecret = jwt.NewHS256([]byte(configuration.TombstoneSecret))
+
+	if configuration.DemoSecret == "" {
+		log.Errorf("demo secret is not set")
+		configuration.DemoSecret = generateSecretString()
+		logger.Infof("using generated secret: %s", configuration.DemoSecret)
+	}
+	mng.demoSecret = jwt.NewHS256([]byte(configuration.DemoSecret))
+
 	err := mng.initTracing()
 	if err != nil {
 		log.Errorf("failed to init tracer %+v", err)
@@ -403,6 +419,9 @@ func (mon *RequestMonitor) initMonitorAPI() {
 }
 
 func (mon *RequestMonitor) Authenticate(req *http.Request, secret *jwt.HMACSHA) error {
+	if mon.conf.DANGERZONE {
+		return nil
+	}
 	token := req.Header.Get("Authorization")
 	if token != "" && len(token) > len("Bearer")+1 {
 		token = token[len("Bearer")+1:]

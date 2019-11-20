@@ -80,7 +80,11 @@ type Configuration struct {
 
 	InfrastructureID string //Infrastructure ID
 
-	DemoMode bool
+	DemoMode               bool
+	DemoSecret             string // the preshared secret that is used to activate perform demo
+	SimulateInfrastructure bool
+
+	DANGERZONE bool // disable all authentication on the control plane also autoallow all login. This is the Danger Zone do not use in production ever!
 }
 
 type MeterMessage struct {
