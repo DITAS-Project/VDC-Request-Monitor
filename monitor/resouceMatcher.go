@@ -38,7 +38,6 @@ type ResouceCache struct {
 
 func NewResourceCache(blueprint *spec.Blueprint) ResouceCache {
 	lfru, _ := lru.New2Q(128)
-	//!TODO: errohandling?
 
 	cache := ResouceCache{
 		cache:       lfru,

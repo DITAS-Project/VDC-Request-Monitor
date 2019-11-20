@@ -98,7 +98,6 @@ func NewManger() (*RequestMonitor, error) {
 		log.Error("could not read config!")
 		return nil, err
 	}
-	//TODO: XXX needs testing
 	blueprint, err := spec.ReadBlueprint("/etc/ditas/blueprint.json")
 
 	if err != nil {
