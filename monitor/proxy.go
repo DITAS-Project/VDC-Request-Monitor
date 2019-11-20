@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -33,10 +34,22 @@ import (
 )
 
 func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
+	if mon.demo(w, req) {
+		return
+	}
+
+	preflight := req.Method == http.MethodOptions || req.Method == http.MethodHead
+
+	if mon.isTombStoned() && !preflight {
+		mon.tombstoneResponse(req, w)
+
+		return
+	}
+
 	var requestID = mon.generateRequestID(req.RemoteAddr)
 
 	//validate Token
-	if mon.serveIAM(w, req) {
+	if mon.serveIAM(w, req) && !preflight {
 		return
 	}
 
@@ -82,14 +95,37 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (mon *RequestMonitor) tombstoneResponse(req *http.Request, w http.ResponseWriter) {
+	log.Info("Monitor is in TomeStoned State")
+	redirectURL, _ := url.Parse(req.URL.String())
+	redirectURL.Host = mon.forwardingAddress
+	if mon.conf.InjectTombstoneHeader {
+		if mon.conf.TombstoneHeader != nil {
+			for k, v := range mon.conf.TombstoneHeader {
+				w.Header().Add(k, v)
+			}
+		} else {
+			log.Warnf("!Security Warning! using default tombstone headers")
+			w.Header().Add("Access-Control-Allow-Headers", "authorization,content-type")
+			w.Header().Add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE")
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+		}
+	}
+	w.Header().Add("X-VDC-Location", fmt.Sprintf("%s://%s", req.URL.Scheme, mon.forwardingAddress))
+	http.Redirect(w, req, redirectURL.String(), 308)
+}
+
 func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string, operationID string) {
 	//inject tracing header
 	if mon.conf.Opentracing {
-		_ = opentracing.GlobalTracer().Inject(
+		err := opentracing.GlobalTracer().Inject(
 			opentracing.StartSpan("VDC-Request").Context(),
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(header),
 		)
+		if err != nil {
+			log.Debugf("could not trace due to %+v\n", err)
+		}
 	}
 	//inject looging header
 	header.Set("X-DITAS-RequestID", requestID)
@@ -99,6 +135,9 @@ func (mon *RequestMonitor) setRequestHeader(header http.Header, requestID string
 // return true if this needs to block the flow, false oterhwise
 func (mon *RequestMonitor) serveIAM(w http.ResponseWriter, req *http.Request) bool {
 	if mon.conf.UseIAM {
+		if mon.conf.DANGERZONE {
+			return false
+		}
 		//TODO handle X-DITAS-Callback
 		if req.Method == http.MethodOptions || req.Method == http.MethodHead {
 			return false
@@ -134,18 +173,21 @@ func (mon *RequestMonitor) blockNonBlueprintRequests(w http.ResponseWriter, oper
 
 func (mon *RequestMonitor) prepareExchange(w http.ResponseWriter, req *http.Request) *ExchangeMessage {
 	if mon.conf.ForwardTraffic || mon.conf.BenchmarkForward {
-		body, err := ioutil.ReadAll(req.Body)
+		var body []byte
+		if req.Body != nil {
+			body, err := ioutil.ReadAll(req.Body)
 
-		if err != nil {
-			log.Printf("Error reading body: %v", err)
-			http.Error(w, "can't read body", http.StatusBadRequest)
+			if err != nil {
+				log.Printf("Error reading body: %v", err)
+				http.Error(w, "can't read body", http.StatusBadRequest)
+			}
+
+			//enact proxy request
+			req.ContentLength = int64(len(body))
+			req.Body = ioutil.NopCloser(bytes.NewReader(body))
 		}
 
-		//enact proxy request
-		req.ContentLength = int64(len(body))
-		req.Body = ioutil.NopCloser(bytes.NewReader(body))
-
-		var sample = (req.Header.Get("X-DITAS-Sample") == "1")
+		var sample = req.Header.Get("X-DITAS-Sample") == "1"
 		sample = sample && req.Method == http.MethodGet
 
 		return &ExchangeMessage{
@@ -165,6 +207,7 @@ func (mon *RequestMonitor) OptainLatesIAMKey(token *jwt.Token) (interface{}, err
 		return nil, errors.New("expecting JWT header to have string kid")
 	}
 
+	//TODO: XXX needs testing
 	if key := mon.iam.LookupKeyID(keyID); len(key) == 1 {
 		return key[0].Materialize()
 	}
@@ -196,6 +239,7 @@ func (mon *RequestMonitor) validateIAM(req *http.Request) (*jwt.Token, error) {
 		return nil, fmt.Errorf("could not parse token, %+v", err)
 	}
 
+	//TODO: XXX needs testing
 	if !token.Valid {
 		return nil, fmt.Errorf("token nolonger valid")
 	}
@@ -232,7 +276,7 @@ func (mon *RequestMonitor) extractOperationId(path string, method string) string
 }
 
 func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
-
+	//TODO: XXX needs testing
 	if resp == nil {
 		//in this case the request failed to produce a response
 		log.Warn("Empty response.")
@@ -274,6 +318,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 		return nil
 	}
 
+	//TODO: XXX needs testing
 	//read the body and reset the reader (otherwise it will not be availible to the client)
 	body, err := ioutil.ReadAll(resp.Body)
 

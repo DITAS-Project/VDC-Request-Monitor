@@ -9,3 +9,4 @@ VDC-Request-Monitor
 .idea
 VDC-Request-Monitor.iml
 .vscode/settings.json
+.config/blueprint.json
