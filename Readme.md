@@ -91,11 +91,18 @@ To configure the agent, you can specify the following values in a JSON file:
 An example file could look like this:
 ```
 {
-    "Endpoint":"http://127.0.0.1:8080",
     "ElasticSearchURL":"http://127.0.0.1:9200",
+    "ElasticBasicAuth": true,
+    "ElasticUser": "user",
+    "ElasticPassword": "123456",
+    "IgnoreElastic": false,
     "VDCName":"tubvdc",
+    "Endpoint":"http://127.0.0.1:8080",
+    "Port": 80,
+    "SSLPort":443,
+    "Opentracing":true, 
     "ZipkinEndpoint": http://localhost:9411,
-    "Opentracing":false,
+    "UseACME": true,
     "UseSelfSigned":true,
     "ForwardTraffic":false,
     "verbose":false,
