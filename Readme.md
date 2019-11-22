@@ -70,6 +70,7 @@ To configure the agent, you can specify the following values in a JSON file:
  * Endpoint => the address of the service that traffic is forwarded to
  * Port => the port the monitor is running on
  * SSLPort => the SSL port of the monitor
+ * InfrastructureID => Infrastructure ID to recognize on which structure the rm is running on
  ### Tracing
  * Opentracing => indicates if an open tracing header should be set on every incoming request and if the frames should be sent to Zipkin
  * ZipkinEndpoint => the address of the Zipkin collector
@@ -85,7 +86,13 @@ To configure the agent, you can specify the following values in a JSON file:
  * KeyCloakURL => URL to get keys for JWT validation
  ### Benchmarking
  * ForwardBenchmark => boolean to indicate if agent should report data to the BenchmarkScheduler
- * BMSURL => URL of the BenchmarkScheduler where the data should be reported to 
+ * BMSURL => URL of the BenchmarkScheduler where the data should be reported to
+ ### Demo
+ * DemoMode => bool if demo mode should be activated
+ * DemoSecret => the preshared secret that is used to activate perform demo
+ * SimulateInfrastructure => bool if the DITAS infastructure should be simulated 
+ * DANGERZONE => disable all authentication on the control plane also autoallow all login. This is the Danger Zone do not use in production ever!
+ 
 
 
 An example file could look like this:
@@ -100,6 +107,7 @@ An example file could look like this:
     "Endpoint":"http://127.0.0.1:8080",
     "Port": 80,
     "SSLPort":443,
+    "InfrastructureID": "fog-1",
     "Opentracing":true, 
     "ZipkinEndpoint": http://localhost:9411,
     "UseACME": true,
@@ -109,7 +117,12 @@ An example file could look like this:
     "UseIAM": true,
     "KeyCloakURL": "http://127.0.0.1:8080/auth/realms/vdc_dummy/protocol/openid-connect/certs",
     "ForwardBenchmark": false,
-    "BMSURL": "http://localhost:8081/sample"
+    "BMSURL": "http://localhost:8081/sample",
+    "DemoMode": false,
+    "DemoSecret": "someSecretString",
+    "SimulateInfrastructure": false,
+    "DANGERZONE": false
+
 }
 ```
 
