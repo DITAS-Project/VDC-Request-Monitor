@@ -5,8 +5,8 @@
 ssh cloudsigma@31.171.247.162 << 'ENDSSH'
 sudo docker stop --time 20 vdc-request-monitor || true
 sudo docker rm --force vdc-request-monitor || true
-sudo docker rmi  ditas/vdc-request-monitor:v02
-sudo docker pull ditas/vdc-request-monitor:v02
+sudo docker rmi  ditas/vdc-request-monitor:v02.3
+sudo docker pull ditas/vdc-request-monitor:v02.3
 
 # Get the host IP
 HOST_IP="$(ip route get 8.8.8.8 | awk '{print $NF; exit}')"

@@ -47,7 +47,7 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticR
 		var client *elastic.Client
 		var err error
 		if config.ElasticBasicAuth {
-			_ = util.WaitForAvailibleWithAuth(config.ElasticSearchURL,[]string{config.ElasticUser,config.ElasticPassword}, nil)
+			_ = util.WaitForAvailibleWithAuth(config.ElasticSearchURL, []string{config.ElasticUser, config.ElasticPassword}, nil)
 
 			client, err = elastic.NewClient(
 				elastic.SetURL(config.ElasticSearchURL),
@@ -91,6 +91,7 @@ func NewElasticReporter(config Configuration, queue chan MeterMessage) (ElasticR
 
 }
 
+//TODO: XXX needs testing
 //Start creates a new worker process and waits for meterMessages
 //can only be terminated by calling Stop()
 func (er *ElasticReporter) Start() {
@@ -108,7 +109,7 @@ func (er *ElasticReporter) Start() {
 	}()
 }
 
-func (er *ElasticReporter) sendMeterMessage(work MeterMessage) error{
+func (er *ElasticReporter) sendMeterMessage(work MeterMessage) error {
 	log.Infof("reporting %s - %s", work.Client, work.Method)
 	work.Timestamp = time.Now()
 	if er.Client != nil {
@@ -118,7 +119,7 @@ func (er *ElasticReporter) sendMeterMessage(work MeterMessage) error{
 			return err
 		} else {
 			log.Debug("reported data to elastic!")
-			return  nil
+			return nil
 		}
 	} else {
 		return fmt.Errorf("no client avaliblibe")

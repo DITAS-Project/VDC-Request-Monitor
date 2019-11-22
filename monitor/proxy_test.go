@@ -84,7 +84,7 @@ func BenchmarkRequestMonitor_extractOperationIdCacheUse(b *testing.B) {
 
 }
 
-func create(blueprint *spec.BlueprintType) RequestMonitor {
+func create(blueprint *spec.Blueprint) RequestMonitor {
 	return RequestMonitor{
 		conf:      Configuration{},
 		blueprint: blueprint,
@@ -92,7 +92,7 @@ func create(blueprint *spec.BlueprintType) RequestMonitor {
 	}
 }
 
-func test(b *testing.T, blueprint *spec.BlueprintType, testData map[string][]testURI) {
+func test(b *testing.T, blueprint *spec.Blueprint, testData map[string][]testURI) {
 
 	//create monitor object
 	mon := create(blueprint)
@@ -109,7 +109,7 @@ func test(b *testing.T, blueprint *spec.BlueprintType, testData map[string][]tes
 
 }
 
-func bench(t *testing.B, blueprint *spec.BlueprintType, testData map[string][]testURI) {
+func bench(t *testing.B, blueprint *spec.Blueprint, testData map[string][]testURI) {
 
 	//create monitor object
 	mon := create(blueprint)

@@ -15,7 +15,7 @@
  *
  * This is being developed for the DITAS Project: https://www.ditas-project.eu/
  */
-
+//DEPRECATED
 package monitor
 
 import (
@@ -25,6 +25,13 @@ import (
 	"net/http"
 )
 
+type ExchangeAgent interface {
+	Start()
+	Stop()
+	Add(ExchangeMessage)
+	Dump() []byte
+}
+
 type ExchangeReporter struct {
 	Queue            chan ExchangeMessage
 	ExchangeEndpoint string
@@ -32,13 +39,21 @@ type ExchangeReporter struct {
 }
 
 //NewExchangeReporter creates a new exchange worker
-func NewExchangeReporter(ExchangeEndpoint string, queue chan ExchangeMessage) (ExchangeReporter, error) {
+func NewExchangeReporter(ExchangeEndpoint string) (*ExchangeReporter, error) {
 	//Wait for endpoint to become availible or timeout with error
-	return ExchangeReporter{
-		Queue:            queue,
+	return &ExchangeReporter{
+		Queue:            make(chan ExchangeMessage, 10),
 		ExchangeEndpoint: ExchangeEndpoint,
 		QuitChan:         make(chan bool),
 	}, nil
+}
+
+func (er *ExchangeReporter) Add(message ExchangeMessage) {
+	er.Queue <- message
+}
+
+func (er *ExchangeReporter) Dump() []byte {
+	return nil
 }
 
 //Start will create a new worker process, for processing exchange Messages
@@ -58,7 +73,7 @@ func (er *ExchangeReporter) Start() {
 					log.Debugf("failed to forward to :%+v", err)
 					return
 				}
-				
+
 				if resp.StatusCode > 200 {
 					msg, err := ioutil.ReadAll(resp.Body)
 					if err != nil {

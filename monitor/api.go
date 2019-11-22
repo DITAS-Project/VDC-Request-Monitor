@@ -40,7 +40,12 @@ type Configuration struct {
 	ElasticUser      string
 	ElasticPassword  string
 
-	CertificateLocation string
+	CertificateLocation string //the location certificates are read/written
+
+	TombstoneSecret        string // the preshared secret that is used to sign tombstone commands
+	InjectTombstoneHeader  bool
+	TombstoneHeader        map[string]string
+	ViolentConnectionDeath bool
 
 	VDCName string // VDCName (used for the index name in elastic serach)
 
@@ -55,6 +60,7 @@ type Configuration struct {
 
 	ForwardTraffic      bool //if true all traffic is forwareded to the exchangeReporter
 	ExchangeReporterURL string
+	ExchangeSecret      string
 
 	UseIAM      bool   //if true, authentication is required for all requests
 	KeyCloakURL string // url for keycloak
@@ -71,6 +77,14 @@ type Configuration struct {
 
 	Port    int
 	SSLPort int
+
+	InfrastructureID string //Infrastructure ID
+
+	DemoMode               bool
+	DemoSecret             string // the preshared secret that is used to activate perform demo
+	SimulateInfrastructure bool
+
+	DANGERZONE bool // disable all authentication on the control plane also autoallow all login. This is the Danger Zone do not use in production ever!
 }
 
 type MeterMessage struct {
@@ -115,18 +129,22 @@ func readConfig() (Configuration, error) {
 
 	_ = viper.Unmarshal(&configuration)
 
+	return initConfiguration(configuration)
+}
+
+func initConfiguration(configuration Configuration) (Configuration, error) {
 	if viper.IsSet("VDCName") {
 		ids := strings.Split(viper.GetString("VDCName"), "-")
 
 		if !viper.IsSet("VDCID") {
 			if len(ids) >= 1 {
-				configuration.VDCID = ids[0]
+				configuration.VDCID = ids[1]
 			}
 		}
 
 		if !viper.IsSet("BlueprintID") {
 			if len(ids) >= 2 {
-				configuration.BlueprintID = ids[1]
+				configuration.BlueprintID = ids[0]
 			}
 		}
 	}
