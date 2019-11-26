@@ -28,5 +28,5 @@ sudo docker rm --force  echo-server || true
 sudo docker run -p 55581:8080 -e DOCKER_HOST_IP=$HOST_IP --restart unless-stopped -d --name echo-server hashicorp/http-echo -listen=:8080 -text="hello world"
 
 # Run the docker mapping the ports and passing the host IP via the environmental variable "DOCKER_HOST_IP"
-sudo docker run -v /tmp/rm.json:/.config/monitor.json -p 55580:80 -e DOCKER_HOST_IP=$HOST_IP --restart unless-stopped -d --name vdc-request-monitor ditas/vdc-request-monitor:v02 /request-monitor --testing
+sudo docker run -v /tmp/rm.json:/.config/monitor.json -p 55580:80 -e DOCKER_HOST_IP=$HOST_IP --restart unless-stopped -d --name vdc-request-monitor ditas/vdc-request-monitor:v02.3 /request-monitor --testing
 ENDSSH
