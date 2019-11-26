@@ -256,6 +256,9 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 				mng.benExporter = benExporter
 			}
 		}
+	} else {
+		configuration.BenchmarkForward = false
+		configuration.ForwardTraffic = false
 	}
 
 	log.Info("Request-Monitor created")
@@ -391,13 +394,14 @@ func (mon *RequestMonitor) forward(requestID string, message ExchangeMessage) {
 	message.Timestamp = time.Now()
 	message.VDCID = mon.conf.VDCID
 	message.BlueprintID = mon.conf.BlueprintID
-
-	if mon.conf.ForwardTraffic {
-		mon.exporter.Add(message)
-	}
-	if mon.conf.BenchmarkForward {
-		if message.sample {
-			mon.benExporter.Add(message)
+	if !viper.GetBool("testing") {
+		if mon.conf.ForwardTraffic {
+			mon.exporter.Add(message)
+		}
+		if mon.conf.BenchmarkForward {
+			if message.sample {
+				mon.benExporter.Add(message)
+			}
 		}
 	}
 }
@@ -503,7 +507,7 @@ func (mon *RequestMonitor) Listen() {
 	mon.initMonitorAPI()
 	//start parallel reporter threads
 	mon.reporter.Start()
-	if !viper.GetBool("testing"){
+	if !viper.GetBool("testing") {
 		if mon.conf.ForwardTraffic {
 			mon.exporter.Start()
 			defer mon.exporter.Stop()
@@ -515,7 +519,7 @@ func (mon *RequestMonitor) Listen() {
 		}
 
 		defer mon.reporter.Stop()
-    }
+	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("Port")))
 	if err != nil {
