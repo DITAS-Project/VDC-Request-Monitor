@@ -6,6 +6,7 @@ import (
 )
 
 func TestRequestMonitor_demoMode(t *testing.T) {
+
 	//defualt config for this test
 	conf := Configuration{
 		configDir:        "./.config/",
@@ -31,7 +32,12 @@ func TestRequestMonitor_demoMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to init config %+v", err)
 	}
-	conf.configDir = "../.config/"
+
+	if testing.Short() {
+		t.Skip()
+	}
+
+	conf.configDir = "../resources/"
 	blueprint, err := loadBlueprint(conf)
 	if err != nil {
 		t.Fatal(err.Error())
