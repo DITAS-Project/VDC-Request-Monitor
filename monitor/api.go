@@ -137,13 +137,13 @@ func initConfiguration(configuration Configuration) (Configuration, error) {
 		ids := strings.Split(viper.GetString("VDCName"), "-")
 
 		if !viper.IsSet("VDCID") {
-			if len(ids) >= 1 {
+			if len(ids) >= 2 {
 				configuration.VDCID = ids[1]
 			}
 		}
 
 		if !viper.IsSet("BlueprintID") {
-			if len(ids) >= 2 {
+			if len(ids) >= 1 {
 				configuration.BlueprintID = ids[0]
 			}
 		}
