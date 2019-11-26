@@ -503,18 +503,19 @@ func (mon *RequestMonitor) Listen() {
 	mon.initMonitorAPI()
 	//start parallel reporter threads
 	mon.reporter.Start()
+	if !viper.GetBool("testing"){
+		if mon.conf.ForwardTraffic {
+			mon.exporter.Start()
+			defer mon.exporter.Stop()
+		}
 
-	if mon.conf.ForwardTraffic {
-		mon.exporter.Start()
-		defer mon.exporter.Stop()
-	}
+		if mon.conf.BenchmarkForward {
+			mon.benExporter.Start()
+			defer mon.benExporter.Stop()
+		}
 
-	if mon.conf.BenchmarkForward {
-		mon.benExporter.Start()
-		defer mon.benExporter.Stop()
-	}
-
-	defer mon.reporter.Stop()
+		defer mon.reporter.Stop()
+    }
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", viper.GetInt("Port")))
 	if err != nil {
