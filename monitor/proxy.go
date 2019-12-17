@@ -53,11 +53,11 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	operationID := mon.extractOperationIdFromRequest(req)
+
 	var exchange = mon.prepareExchange(w, req)
 	method := req.URL.Path
 	req.URL = mon.conf.endpointURL
-
-	operationID := mon.extractOperationId(req.URL.Path, req.Method)
 
 	if mon.blockNonBlueprintRequests(w, operationID) {
 		return
@@ -73,6 +73,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 	//report all logging information
 	meter := MeterMessage{
 		OperationID:   operationID,
+		BlueprintID:   mon.conf.BlueprintID,
 		Client:        req.RemoteAddr,
 		Method:        method,
 		Kind:          req.Method,
@@ -84,6 +85,7 @@ func (mon *RequestMonitor) serve(w http.ResponseWriter, req *http.Request) {
 
 	if nil != exchange {
 		exchange.OperationID = operationID
+		exchange.BlueprintID = mon.conf.BlueprintID
 		exchange.Client = req.RemoteAddr
 		exchange.Method = method
 		exchange.Kind = req.Method
@@ -264,12 +266,22 @@ func (mon *RequestMonitor) attachIAMToRequest(req *http.Request, token *jwt.Toke
 	return nil
 }
 
-func (mon *RequestMonitor) extractOperationId(path string, method string) string {
+func (mon *RequestMonitor) extractOperationIdFromRequest(request *http.Request) string {
+	opId := mon.extractOperationId(request.URL.Path, request.Method)
+
+	if opId == "" {
+		log.Warnf("failed to get OpId %+v", request)
+	}
+	return opId
+
+}
+
+func (mon *RequestMonitor) extractOperationId(path, method string) string {
 
 	optID, err := mon.cache.Match(path, method)
 
 	if err != nil {
-		log.Debugf("failed to match %s %s - %+v", path, method, err)
+		log.Warnf("failed to match %s %s - %+v", method, path, err)
 	}
 
 	return optID
@@ -308,6 +320,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 
 	meter := MeterMessage{
 		OperationID:    operationID,
+		BlueprintID:    mon.conf.BlueprintID,
 		RequestID:      requestID,
 		ResponseCode:   resp.StatusCode,
 		ResponseLength: resp.ContentLength,
@@ -339,6 +352,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	}
 
 	exchange.OperationID = operationID
+	exchange.BlueprintID = mon.conf.BlueprintID
 	exchange.RequestID = requestID
 	exchange.ResponseCode = resp.StatusCode
 	exchange.ResponseLength = resp.ContentLength

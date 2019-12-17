@@ -107,7 +107,10 @@ func NewManger() (*RequestMonitor, error) {
 		log.Error("could not read config!")
 		return nil, err
 	}
-	blueprint, _ := loadBlueprint(configuration)
+	blueprint, err := loadBlueprint(configuration)
+	if err != nil {
+		log.Errorf("Failed to load blueprint, degraded functionallity! %+v", err)
+	}
 
 	return initManager(configuration, blueprint)
 }
@@ -171,6 +174,12 @@ func initManager(configuration Configuration, blueprint *spec.Blueprint) (*Reque
 
 	if configuration.DANGERZONE {
 		log.Warnln("YOU ARE RUNNING WITHOUT AUTHENTICATION! THIS IS DANGEROUS AND SHOULD ONLY BE DONE FOR TESTING!")
+	}
+
+	if blueprint != nil {
+		configuration.BlueprintID = blueprint.ID
+	} else {
+		log.Warn("Did not find a blueprint, can't annotate data with blueprint and operation IDs.")
 	}
 
 	mng := &RequestMonitor{

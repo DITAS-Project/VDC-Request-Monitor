@@ -59,6 +59,8 @@ func NewResourceCache(blueprint *spec.Blueprint) ResouceCache {
 		//TODO: XXX this is a hack (if anything to get corret corrolation)
 		sort.Sort(sorter(cache.pathMatcher))
 
+	} else {
+		log.Warnf("could not read blueprint shema - monitoring degraded")
 	}
 
 	return cache

@@ -1,355 +1,1522 @@
 {
-    "INTERNAL_STRUCTURE": {
-        "Overview": {
-            "name": "Computation blueprints for SPART MANUFACTURING plant",
-            "description": "Computations blueprints able to get data from the 3 ESTARTA 315 FV machines working on the SPART MANUFATURING plant. Expose 3 methods.",
-            "tags": [
+    "_id": "ac136762-66dc-4e9d-ac5b-60c6ee590193",
+    "ABSTRACT_PROPERTIES": [
+        {
+            "method_id": "GetSimplifiedDiagnostic",
+            "goalTrees": {
+                "dataUtility": {
+                    "type": "AND",
+                    "children": [
+                        {
+                            "type": "AND",
+                            "children": null,
+                            "leaves": [
+                                {
+                                    "id": "serviceAvailable",
+                                    "description": "Service available",
+                                    "weight": 1,
+                                    "attributes": [
+                                        "availability_90"
+                                    ]
+                                },
+                                {
+                                    "id": "fastProcess",
+                                    "description": "Fast process",
+                                    "weight": 1,
+                                    "attributes": [
+                                        "responseTime_2"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "AND",
+                            "children": null,
+                            "leaves": [
+                                {
+                                    "id": "freshData",
+                                    "description": "Fresh data",
+                                    "weight": 1,
+                                    "attributes": [
+                                        "timeliness"
+                                    ]
+                                },
+                                {
+                                    "id": "EnoughData",
+                                    "description": "Enough amount of Data",
+                                    "weight": 1,
+                                    "attributes": [
+                                        "volume_1200"
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "leaves": null
+                },
+                "security": {
+                    "type": "AND",
+                    "children": null,
+                    "leaves": [
+                        {
+                            "id": "TransportEncryption",
+                            "description": "Secure data transport",
+                            "weight": 1,
+                            "attributes": [
+                                "encryption_AES128"
+                            ]
+                        },
+                        {
+                            "id": "AccessControl",
+                            "description": "Secure access",
+                            "weight": 1,
+                            "attributes": [
+                                "accessControl_direct"
+                            ]
+                        }
+                    ]
+                },
+                "privacy": {
+                    "type": null,
+                    "children": null,
+                    "leaves": null
+                }
+            }
+        }
+    ],
+    "COOKBOOK_APPENDIX": {
+        "Resources": {
+            "name": "ideko-resources-cloudsigma",
+            "description": "IDEKO resources at Cloudsigma available to our clients",
+            "infrastructures": [
                 {
-                    "method_id": "GetStreamingData",
-                    "tags": ["machine", "data", "json", "stream", "streaming"]
+                    "name": "infr-cloudsigma",
+                    "description": "",
+                    "type": "cloud",
+                    "provider": {
+                        "api_endpoint": "https://fra.cloudsigma.com/api/2.0",
+                        "api_type": "cloudsigma",
+                        "secret_id": "876a7464-6f75-4edd-a559-afd8bc48836c",
+                        "credentials": null
+                    },
+                    "resources": [
+                        {
+                            "name": "ideko-c1",
+                            "type": "",
+                            "cpu": 4000,
+                            "cores": 0,
+                            "ram": 4096,
+                            "disk": 40960,
+                            "role": "master",
+                            "image_id": "560420b4-3f54-4670-ba1c-a8cd0b2a7f3e",
+                            "drives": [
+                                {
+                                    "name": "ideko-c1-d1",
+                                    "type": "SSD",
+                                    "size": 10000
+                                }
+                            ],
+                            "extra_properties": {
+                                "cloudsigma_boot_drive_type": "custom"
+                            }
+                        },
+                        {
+                            "name": "ideko-c2",
+                            "type": "",
+                            "cpu": 8000,
+                            "cores": 0,
+                            "ram": 4096,
+                            "disk": 40960,
+                            "role": "slave",
+                            "image_id": "560420b4-3f54-4670-ba1c-a8cd0b2a7f3e",
+                            "drives": [
+                                {
+                                    "name": "ideko-c2-d1",
+                                    "type": "SSD",
+                                    "size": 70000
+                                }
+                            ],
+                            "extra_properties": {
+                                "cloudsigma_boot_drive_type": "custom"
+                            }
+                        },
+                        {
+                            "name": "ideko-c3",
+                            "type": "",
+                            "cpu": 8000,
+                            "cores": 0,
+                            "ram": 12000,
+                            "disk": 40000,
+                            "role": "slave",
+                            "image_id": "560420b4-3f54-4670-ba1c-a8cd0b2a7f3e",
+                            "drives": [
+                                {
+                                    "name": "ideko-c3-d1",
+                                    "type": "SSD",
+                                    "size": 70000
+                                }
+                            ],
+                            "extra_properties": {
+                                "cloudsigma_boot_drive_type": "custom"
+                            }
+                        }
+                    ],
+                    "extra_properties": {
+                        "kubeadm_preinstalled_image": "true",
+                        "owner": "DataAdministrator"
+                    }
                 },
                 {
-                    "method_id": "GetSimplifiedDiagnostic",
-                    "tags": ["machine", "diagnostic", "anomaly detection"]
+                    "name": "spart-fog-infrastructure",
+                    "description": "",
+                    "type": "fog",
+                    "provider": {
+                        "api_endpoint": "212.8.121.134",
+                        "api_type": "kubernetes",
+                        "secret_id": "83f8c14d-f7ab-450b-96b7-820637971e4c",
+                        "credentials": null
+                    },
+                    "resources": [
+                        {
+                            "name": "spart-fog-server-1",
+                            "type": "",
+                            "cpu": 1830,
+                            "cores": 0,
+                            "ram": 8000,
+                            "disk": 480000,
+                            "role": "master",
+                            "image_id": "",
+                            "ip": "212.8.121.134",
+                            "drives": [],
+                            "extra_properties": null
+                        }
+                    ],
+                    "extra_properties": {
+                        "available_ports_range": "30000-30005",
+                        "ditas_default": "true",
+                        "owner": "ApplicationDeveloper"
+                    }
                 },
                 {
-                    "method_id": "GetFullDiagnostic",
-                    "tags": ["machine", "diagnostic", "anomaly detection"]
+                    "name": "spart-edge-infrastructure",
+                    "description": "",
+                    "type": "edge",
+                    "provider": {
+                        "api_endpoint": "212.8.121.134",
+                        "api_type": "kubernetes",
+                        "secret_id": "39ac65e8-fbdf-4855-a9d4-9f3ffdaa8db3",
+                        "credentials": null
+                    },
+                    "resources": [
+                        {
+                            "name": "spart-edge-server-1",
+                            "type": "",
+                            "cpu": 1830,
+                            "cores": 0,
+                            "ram": 4000,
+                            "disk": 120000,
+                            "role": "master",
+                            "image_id": "",
+                            "ip": "212.8.121.134",
+                            "drives": [],
+                            "extra_properties": null
+                        }
+                    ],
+                    "extra_properties": {
+                        "available_ports_range": "30006-30011",
+                        "owner": "ApplicationDeveloper"
+                    }
                 }
             ]
         },
-        "Data_Sources": [{
-            "id": "MachineTimeseriesDatabase - Kelly",
-            "description": "Machine timeseries database (InfluxDB) for Kelly (HW11)",
-            "location": "edge",
-            "class": "time-series database",
-            "type": "InfluxDB",
-            "parameters": {
-                "ip": "172.16.33.125",
-                "port": "8086",
-                "user": "defaultdbuser ",
-                "password": "****",
-                "database": "defaultdb"
+        "Deployment": {
+            "id": "ac136762-66dc-4e9d-ac5b-60c6ee590193",
+            "name": "",
+            "infrastructures": {
+                "25471f70-8c8f-4abb-bb92-77c5a275d161": {
+                    "id": "25471f70-8c8f-4abb-bb92-77c5a275d161",
+                    "name": "infr-cloudsigma",
+                    "type": "cloudsigma",
+                    "provider": {
+                        "api_endpoint": "https://fra.cloudsigma.com/api/2.0",
+                        "api_type": "cloudsigma",
+                        "secret_id": "876a7464-6f75-4edd-a559-afd8bc48836c",
+                        "credentials": null
+                    },
+                    "Nodes": {
+                        "master": [
+                            {
+                                "hostname": "infr-cloudsigma-ideko-c1",
+                                "role": "master",
+                                "cpu": 4000,
+                                "cores": 2,
+                                "ram": 4294967296,
+                                "ip": "85.204.96.47",
+                                "drive_size": 42949672960,
+                                "data_drives": [
+                                    {
+                                        "name": "data-infr-cloudsigma-ideko-c1-ideko-c1-d1",
+                                        "size": 10485760000
+                                    }
+                                ],
+                                "extra_properties": {
+                                    "cloudsigma_boot_drive_type": "custom"
+                                }
+                            }
+                        ],
+                        "slave": [
+                            {
+                                "hostname": "infr-cloudsigma-ideko-c2",
+                                "role": "slave",
+                                "cpu": 8000,
+                                "cores": 3,
+                                "ram": 4294967296,
+                                "ip": "85.204.96.119",
+                                "drive_size": 42949672960,
+                                "data_drives": [
+                                    {
+                                        "name": "data-infr-cloudsigma-ideko-c2-ideko-c2-d1",
+                                        "size": 73400320000
+                                    }
+                                ],
+                                "extra_properties": {
+                                    "cloudsigma_boot_drive_type": "custom"
+                                }
+                            },
+                            {
+                                "hostname": "infr-cloudsigma-ideko-c3",
+                                "role": "slave",
+                                "cpu": 8000,
+                                "cores": 3,
+                                "ram": 12582912000,
+                                "ip": "153.92.30.178",
+                                "drive_size": 41943040000,
+                                "data_drives": [
+                                    {
+                                        "name": "data-infr-cloudsigma-ideko-c3-ideko-c3-d1",
+                                        "size": 73400320000
+                                    }
+                                ],
+                                "extra_properties": {
+                                    "cloudsigma_boot_drive_type": "custom"
+                                }
+                            }
+                        ]
+                    },
+                    "status": "running",
+                    "vdcs": null,
+                    "VDM": false,
+                    "extra_properties": {
+                        "kubeadm_preinstalled_image": "true",
+                        "owner": "DataAdministrator"
+                    }
+                },
+                "54635b10-31b9-4757-a665-271d7b5e1680": {
+                    "id": "54635b10-31b9-4757-a665-271d7b5e1680",
+                    "name": "spart-fog-infrastructure",
+                    "type": "",
+                    "provider": {
+                        "api_endpoint": "212.8.121.134",
+                        "api_type": "kubernetes",
+                        "secret_id": "83f8c14d-f7ab-450b-96b7-820637971e4c",
+                        "credentials": null
+                    },
+                    "Nodes": {
+                        "master": [
+                            {
+                                "hostname": "spart-fog-server-1",
+                                "role": "master",
+                                "cpu": 1830,
+                                "cores": 0,
+                                "ram": 8000,
+                                "ip": "212.8.121.134",
+                                "drive_size": 480000,
+                                "data_drives": [],
+                                "extra_properties": null
+                            }
+                        ]
+                    },
+                    "status": "",
+                    "vdcs": null,
+                    "VDM": false,
+                    "extra_properties": {
+                        "available_ports_range": "30000-30005",
+                        "ditas_default": "true",
+                        "owner": "ApplicationDeveloper"
+                    }
+                },
+                "ede3984b-28bc-4d9c-8535-09235e02ddbe": {
+                    "id": "ede3984b-28bc-4d9c-8535-09235e02ddbe",
+                    "name": "spart-edge-infrastructure",
+                    "type": "",
+                    "provider": {
+                        "api_endpoint": "212.8.121.134",
+                        "api_type": "kubernetes",
+                        "secret_id": "39ac65e8-fbdf-4855-a9d4-9f3ffdaa8db3",
+                        "credentials": null
+                    },
+                    "Nodes": {
+                        "master": [
+                            {
+                                "hostname": "spart-edge-server-1",
+                                "role": "master",
+                                "cpu": 1830,
+                                "cores": 0,
+                                "ram": 4000,
+                                "ip": "212.8.121.134",
+                                "drive_size": 120000,
+                                "data_drives": [],
+                                "extra_properties": null
+                            }
+                        ]
+                    },
+                    "status": "",
+                    "vdcs": null,
+                    "VDM": false,
+                    "extra_properties": {
+                        "available_ports_range": "30006-30011",
+                        "owner": "ApplicationDeveloper"
+                    }
+                }
             },
-            "schema": {
-                "TO-DO": "[Borja - To define the schema of the database. Check Javi Escartin's CSV data examples to devise the future influxDB structure]"
+            "extra_properties": null,
+            "status": ""
+        }
+    },
+    "DATA_MANAGEMENT": [
+        {
+            "attributes": {
+                "dataUtility": [
+                    {
+                        "id": "availability_90",
+                        "properties": {
+                            "availability": {
+                                "minimum": 90,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Availability"
+                    },
+                    {
+                        "id": "responseTime_2",
+                        "properties": {
+                            "responseTime": {
+                                "maximum": 4,
+                                "unit": "second",
+                                "value": null
+                            }
+                        },
+                        "type": "ResponseTime"
+                    },
+                    {
+                        "id": "timeliness",
+                        "properties": {
+                            "timeliness": {
+                                "minimum": 90,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Timeliness"
+                    },
+                    {
+                        "id": "volume_1200",
+                        "properties": {
+                            "volume": {
+                                "minimum": 1200,
+                                "unit": "tuple",
+                                "value": null
+                            }
+                        },
+                        "type": "Volume"
+                    }
+                ],
+                "privacy": [],
+                "security": [
+                    {
+                        "id": "encryption_AES128",
+                        "properties": {
+                            "algorithm": {
+                                "unit": "list",
+                                "value": [
+                                    "TLS_AES_256_GCM_SHA384",
+                                    "TLS_AES_128_GCM_SHA256",
+                                    "TLS_AES_128_CCM_8_SHA256",
+                                    "TLS_AES_128_CCM_SHA256"
+                                ]
+                            },
+                            "keyLength": {
+                                "unit": "number",
+                                "value": 128
+                            },
+                            "protocol": {
+                                "unit": "enum",
+                                "value": "TLS"
+                            }
+                        },
+                        "type": "TransportEncryption"
+                    },
+                    {
+                        "id": "accessControl_direct",
+                        "properties": {
+                            "Protocol": {
+                                "value": "Direct, OAuth"
+                            }
+                        },
+                        "type": "AccessControl"
+                    }
+                ]
+            },
+            "method_id": "GetStreamingData"
+        },
+        {
+            "attributes": {
+                "dataUtility": [
+                    {
+                        "id": "availability_90",
+                        "properties": {
+                            "availability": {
+                                "minimum": 90,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Availability"
+                    },
+                    {
+                        "id": "responseTime_2",
+                        "properties": {
+                            "responseTime": {
+                                "maximum": 4,
+                                "unit": "second",
+                                "value": null
+                            }
+                        },
+                        "type": "ResponseTime"
+                    },
+                    {
+                        "id": "timeliness",
+                        "properties": {
+                            "timeliness": {
+                                "minimum": 90,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Timeliness"
+                    },
+                    {
+                        "id": "volume_1200",
+                        "properties": {
+                            "volume": {
+                                "minimum": 1200,
+                                "unit": "tuple",
+                                "value": null
+                            }
+                        },
+                        "type": "Volume"
+                    }
+                ],
+                "privacy": [],
+                "security": [
+                    {
+                        "id": "encryption_AES128",
+                        "properties": {
+                            "algorithm": {
+                                "unit": "list",
+                                "value": [
+                                    "TLS_AES_256_GCM_SHA384",
+                                    "TLS_AES_128_GCM_SHA256",
+                                    "TLS_AES_128_CCM_8_SHA256",
+                                    "TLS_AES_128_CCM_SHA256"
+                                ]
+                            },
+                            "keyLength": {
+                                "unit": "number",
+                                "value": 128
+                            },
+                            "protocol": {
+                                "unit": "enum",
+                                "value": "TLS"
+                            }
+                        },
+                        "type": "TransportEncryption"
+                    },
+                    {
+                        "id": "accessControl_direct",
+                        "properties": {
+                            "credentials": {
+                                "unit": "list",
+                                "value": [
+                                    "researcher_id"
+                                ]
+                            },
+                            "protocol": {
+                                "unit": "enum",
+                                "value": "username/password"
+                            },
+                            "required": {
+                                "value": "true"
+                            }
+                        },
+                        "type": "Protocol"
+                    }
+                ]
+            },
+            "method_id": "GetSimplifiedDiagnostic"
+        },
+        {
+            "attributes": {
+                "dataUtility": [
+                    {
+                        "id": "availability_99",
+                        "properties": {
+                            "availability": {
+                                "minimum": 99,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Availability"
+                    },
+                    {
+                        "id": "timeliness_90",
+                        "properties": {
+                            "timeliness": {
+                                "minimum": 90,
+                                "unit": "percentage",
+                                "value": null
+                            }
+                        },
+                        "type": "Timeliness"
+                    },
+                    {
+                        "id": "volume_7776000",
+                        "properties": {
+                            "volume": {
+                                "unit": "none",
+                                "value": "7776000"
+                            }
+                        },
+                        "type": "Volume"
+                    },
+                    {
+                        "id": "responseTime_4",
+                        "properties": {
+                            "responseTime": {
+                                "maximum": 4,
+                                "unit": "second",
+                                "value": null
+                            }
+                        },
+                        "type": "ResponseTime"
+                    }
+                ],
+                "privacy": [],
+                "security": [
+                    {
+                        "id": "encryption_AES128",
+                        "properties": {
+                            "algorithm": {
+                                "unit": "list",
+                                "value": [
+                                    "TLS_AES_256_GCM_SHA384",
+                                    "TLS_AES_128_GCM_SHA256",
+                                    "TLS_AES_128_CCM_8_SHA256",
+                                    "TLS_AES_128_CCM_SHA256"
+                                ]
+                            },
+                            "keyLength": {
+                                "unit": "number",
+                                "value": 128
+                            },
+                            "protocol": {
+                                "unit": "enum",
+                                "value": "TLS"
+                            }
+                        },
+                        "type": "TransportEncryption"
+                    },
+                    {
+                        "id": "accessControl_direct",
+                        "properties": {
+                            "Protocol": {
+                                "value": "Direct, OAuth"
+                            }
+                        },
+                        "type": "AccessControl"
+                    }
+                ]
+            },
+            "method_id": "GetFullDiagnostic"
+        }
+    ],
+    "EXPOSED_API": {
+        "info": {
+            "description": "Computations blueprints able to get data from the 3 ESTARTA 315 FV machines working on the SPART MANUFATURING plant. Expose 3 methods.",
+            "title": "Computation blueprints for SPART MANUFACTURING plant (IDEKO use case)",
+            "version": "0.0.1"
+        },
+        "paths": {
+            "/GetFullDiagnostic": {
+                "get": {
+                    "summary": "Returns a complete view of the states of the machines in the plant. A list of comma separated machine ids can be passed.",
+                    "operationId": "GetFullDiagnostic",
+                    "parameters": [
+                        {
+                            "name": "machines",
+                            "in": "query",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK"
+                        }
+                    },
+                    "x-data-sources": [
+                        "InfluxDB"
+                    ]
+                }
+            },
+            "/GetSimplifiedDiagnostic": {
+                "get": {
+                    "summary": "Returns a simplified view of the state of the machines in the plant. A list of comma separated machine ids can be passed.",
+                    "operationId": "GetSimplifiedDiagnostic",
+                    "parameters": [
+                        {
+                            "name": "machines",
+                            "in": "query",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK"
+                        }
+                    },
+                    "x-data-sources": [
+                        "InfluxDB"
+                    ]
+                }
+            },
+            "/GetStreamingData": {
+                "get": {
+                    "summary": "Returns the streaming data for the parameters given. MachinesIds can be a comma-separated list of machines.",
+                    "operationId": "GetStreamingData",
+                    "parameters": [
+                        {
+                            "name": "machines",
+                            "in": "query",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "OK"
+                        },
+                        "default": {
+                            "description": "Unexpected error"
+                        }
+                    },
+                    "x-data-sources": [
+                        "Streaming API"
+                    ]
+                }
+            }
+        }
+    },
+    "INTERNAL_STRUCTURE": {
+        "DAL_Images": {
+            "influxdb-dal-local": {
+                "original_ip": "212.8.121.134",
+                "cluster_original_ips": {
+                    "infr-cloudsigma": "153.92.30.130",
+                    "spart-edge-infrastructure": "192.168.30.32",
+                    "spart-fog-infrastructure": "192.168.30.32"
+                }
+            },
+            "streaming-dal": {
+                "original_ip": "212.8.121.134",
+                "cluster_original_ips": {
+                    "spart-edge-infrastructure": "192.168.30.32",
+                    "spart-fog-infrastructure": "192.168.30.32"
+                }
             }
         },
+        "Data_Sources": [
             {
-                "id": "MachineTimeseriesDatabase - Slater",
+                "class": "time-series database",
+                "description": "Machine timeseries database (InfluxDB) for Kelly (HW11)",
+                "id": "MachineTimeseriesDatabase - Kelly",
+                "location": "edge",
+                "parameters": {
+                    "database": "defaultdb",
+                    "ip": "172.16.33.125",
+                    "password": "****",
+                    "port": "8086",
+                    "user": "defaultdbuser "
+                },
+                "schema": {
+                    "TO-DO": "[Borja - To define the schema of the database. Check Javi Escartin's CSV data examples to devise the future influxDB structure]"
+                },
+                "type": "InfluxDB"
+            },
+            {
+                "class": "time-series database",
                 "description": "Machine timeseries database (InfluxDB) for Slater (HW15)",
+                "id": "MachineTimeseriesDatabase - Slater",
                 "location": "edge",
-                "class": "time-series database",
-                "type": "InfluxDB",
                 "parameters": {
+                    "database": "defaultdb",
                     "ip": "172.16.32.215",
-                    "port": "8086",
-                    "user": "defaultdbuser ",
                     "password": "****",
-                    "database": "defaultdb"
+                    "port": "8086",
+                    "user": "defaultdbuser "
                 },
                 "schema": {
                     "TO-DO": "[Borja - To define the schema of the database. Check Javi Escaqrtin's CSV data examples to devise the future influxDB structure]"
-                }
+                },
+                "type": "InfluxDB"
             },
             {
-                "id": "MachineTimeseriesDatabase - Zack",
-                "description": "Machine timeseries database (InfluxDB) for Zack (HW16)",
-                "location": "edge",
                 "class": "time-series database",
-                "type": "InfluxDB",
+                "description": "Machine timeseries database (InfluxDB) for Zack (HW16)",
+                "id": "MachineTimeseriesDatabase - Zack",
+                "location": "edge",
                 "parameters": {
+                    "database": "defaultdb",
                     "ip": "172.16.33.202",
-                    "port": "8086",
-                    "user": "defaultdbuser ",
                     "password": "****",
-                    "database": "defaultdb"
+                    "port": "8086",
+                    "user": "defaultdbuser "
                 },
                 "schema": {
                     "TO-DO": "[Borja - To define the schema of the database. Check Javi Escaqrtin's CSV data examples to devise the future influxDB structure]"
-                }
+                },
+                "type": "InfluxDB"
             },
             {
-                "id": "InboxStreamingAPI - Kelly",
-                "description": "In-box streaming API for Kelly served directly from the interoperability module on the smart box (HW11)",
-                "location": "edge",
                 "class": "data stream",
-                "type": "rest",
+                "description": "In-box streaming API for Kelly served directly from the interoperability module on the smart box (HW11)",
+                "id": "InboxStreamingAPI - Kelly",
+                "location": "edge",
                 "parameters": {
                     "url": "http://172.16.33.125:7888/stream?machines=XXC_MBXSLL"
-                }
+                },
+                "type": "rest"
             },
             {
-                "id": "InboxStreamingAPI - Slater",
-                "description": "In-box streaming API for Slater served directly from the interoperability module on the smart box (HW15)",
-                "location": "edge",
                 "class": "data stream",
-                "type": "rest",
+                "description": "In-box streaming API for Slater served directly from the interoperability module on the smart box (HW15)",
+                "id": "InboxStreamingAPI - Slater",
+                "location": "edge",
                 "parameters": {
                     "url": "http://172.16.32.215:7888/stream?machines=CMS_LJ3Z4P"
-                }
+                },
+                "type": "rest"
             },
             {
-                "id": "InboxStreamingAPI - Zack",
-                "description": "In-box streaming API for Zack served directly from the interoperability module on the smart box (HW16)",
-                "location": "edge",
                 "class": "data stream",
-                "type": "rest",
+                "description": "In-box streaming API for Zack served directly from the interoperability module on the smart box (HW16)",
+                "id": "InboxStreamingAPI - Zack",
+                "location": "edge",
                 "parameters": {
                     "url": "http://172.16.33.202:7888/stream?machines=CMX_LQLS26"
-                }
+                },
+                "type": "rest"
             }
         ],
+        "Identity_Access_Management": {
+            "iam_endpoint": "",
+            "jwks_uri": "",
+            "provider": null,
+            "roles": null
+        },
         "Methods_Input": {
             "Methods": [
                 {
-                    "method_id": "GetStreamingData",
-                    "data_sources": [
+                    "dataSources": [
                         {
-                            "dataSource_id": "InboxStreamingAPI - Kelly",
-                            "tables": [
-                            ]
+                            "database": null,
+                            "dataSource_id": "InboxStreamingAPI - Kelly"
                         },
                         {
-                            "dataSource_id": "InboxStreamingAPI - Slater",
-                            "tables": [
-                            ]
+                            "database": null,
+                            "dataSource_id": "InboxStreamingAPI - Slater"
                         },
                         {
-                            "dataSource_id": "InboxStreamingAPI - Zack",
-                            "tables": [
-                            ]
+                            "database": null,
+                            "dataSource_id": "InboxStreamingAPI - Zack"
                         }
+                    ],
+                    "method_id": "GetStreamingData"
+                },
+                {
+                    "dataSources": [
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-kelly",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Kelly",
+                            "dataSource_type": "time-series"
+                        },
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-slater",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Slater",
+                            "dataSource_type": "time-series"
+                        },
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-zack",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Zack",
+                            "dataSource_type": "time-series"
+                        }
+                    ],
+                    "method_id": "GetSimplifiedDiagnostic"
+                },
+                {
+                    "dataSources": [
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-kelly",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_XXC_MBXSLL_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Kelly",
+                            "dataSource_type": "time-series"
+                        },
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-slater",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMS_LJ3Z4P_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Slater",
+                            "dataSource_type": "time-series"
+                        },
+                        {
+                            "database": [
+                                {
+                                    "database_id": "influxdb-zack",
+                                    "tables": [
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_AW8HY7"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_FS38ZU"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_UKZVHZ"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_66SZ4X"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_V3TRK1"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_ARKS8V"
+                                        },
+                                        {
+                                            "columns": [
+                                                {
+                                                    "column_id": "time",
+                                                    "computeDataUtility": false
+                                                },
+                                                {
+                                                    "column_id": "value",
+                                                    "computeDataUtility": false
+                                                }
+                                            ],
+                                            "table_id": "I_CMX_LQLS26_68SBRS"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "dataSource_id": "MachineTimeseriesDatabase - Zack",
+                            "dataSource_type": "time-series"
+                        }
+                    ],
+                    "method_id": "GetFullDiagnostic"
+                }
+            ]
+        },
+        "Overview": {
+            "description": "Computations blueprints able to get data from the 3 ESTARTA 315 FV machines working on the SPART MANUFATURING plant. Expose 3 methods.",
+            "name": "Computation blueprints for SPART MANUFACTURING plant",
+            "tags": [
+                {
+                    "method_id": "GetStreamingData",
+                    "tags": [
+                        "machine",
+                        "data",
+                        "json",
+                        "stream",
+                        "streaming"
                     ]
                 },
                 {
                     "method_id": "GetSimplifiedDiagnostic",
-                    "dataSources": [
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Kelly",
-                            "tables": [
-                                {
-                                    "table_id": "I_XXC_MBXSLL_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        },
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Slater",
-                            "tables": [
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        },
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Zack",
-                            "tables": [
-                                {
-                                    "table_id": "I_CMX_LQLS26_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        }
+                    "tags": [
+                        "machine",
+                        "diagnostic",
+                        "anomaly detection"
                     ]
                 },
                 {
                     "method_id": "GetFullDiagnostic",
-                    "dataSources": [
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Kelly",
-                            "tables": [
-                                {
-                                    "table_id": "I_XXC_MBXSLL_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_XXC_MBXSLL_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        },
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Slater",
-                            "tables": [
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMS_LJ3Z4P_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        },
-                        {
-                            "dataSource_id": "MachineTimeseriesDatabase - Zack",
-                            "tables": [
-                                {
-                                    "table_id": "I_CMX_LQLS26_AW8HY7",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_FS38ZU",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_UKZVHZ",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_66SZ4X",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_V3TRK1",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_ARKS8V",
-                                    "columns": ["time", "value"]
-                                },
-                                {
-                                    "table_id": "I_CMX_LQLS26_68SBRS",
-                                    "columns": ["time", "value"]
-                                }
-                            ]
-                        }
+                    "tags": [
+                        "machine",
+                        "diagnostic",
+                        "anomaly detection"
                     ]
                 }
             ]
-        },
-        "Flow": {},
-        "DAL_Images": {
-            "streaming-api": {
-                "internal_port": 40001,
-                "external_port": 30000,
-                "image": "153.92.30.56:5050/streaming-dal:latest"
-            }
-        },
-        "VDC_Images": {
-            "caf": {
-                "internal_port": 1888,
-                "external_port": 30005,
-                "image": "153.92.30.56:5050/computation-vdc:latest"
-            }
-        },
-        "Identity_Access_Management": {
-            "jwks_uri": "",
-            "iam_endpoint": ""
         },
         "Testing_Output_Data": [
             {
@@ -364,492 +1531,11 @@
                 "method_id": "GetFullDiagnostic",
                 "zip_data": "TO-DO URL to a zip file with data samples"
             }
-        ]
-    },
-    "DATA_MANAGEMENT": [
-        {
-            "method_id":"GetStreamingData",
-            "attributes":
-            {
-                "dataUtility":
-                [
-                    {
-                        "id": "availability_9099",
-                        "description":"Availability 90-99",
-                        "type":"Availability",
-                        "properties":
-                        {
-                            "availability":
-                            {
-                                "unit": "percentage",
-                                "minimum":90,
-                                "maximum":99
-                            }
-                        }
-                    },
-                    {
-                        "id": "processCompleteness_80",
-                        "description": "Process completeness 80",
-                        "type": "Process completeness",
-                        "properties":
-                        {
-                            "completeness":
-                            {
-                                "minimum":80,
-                                "unit": "percentage"
-                            }
-                        }
-                    },
-                    {
-                        "id": "timeliness_065",
-                        "description": "Timeliness 0.65",
-                        "type": "Timeliness",
-                        "properties":
-                        {
-                            "timeliness":
-                            {
-                                "maximum":0.65,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "precision_08",
-                        "description": "Precision 0.8",
-                        "type": "Precision",
-                        "properties":
-                        {
-                            "precision":
-                            {
-                                "minimum":0.8,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "accuracy_09",
-                        "description": "Accuracy 0.9",
-                        "type": "Accuracy",
-                        "properties":
-                        {
-                            "accuracy":
-                            {
-                                "minimum":0.9,
-                                "unit": "none"
-                            }
-                        }
-                    }
-                ],
-                "security": [],
-                "privacy": []
-            }
-        },
-        {
-            "method_id": "GetSimplifiedDiagnostic",
-            "attributes":
-            {
-                "dataUtility":
-                [
-                    {
-                        "id": "availability_9099",
-                        "description":"Availability 90-99",
-                        "type":"Availability",
-                        "properties":
-                        {
-                            "availability":
-                            {
-                                "unit": "percentage",
-                                "minimum":90,
-                                "maximum":99
-                            }
-                        }
-                    },
-                    {
-                        "id": "processCompleteness_80",
-                        "description": "Process completeness 80",
-                        "type": "Process completeness",
-                        "properties":
-                        {
-                            "completeness":
-                            {
-                                "minimum":80,
-                                "unit": "percentage"
-                            }
-                        }
-                    },
-                    {
-                        "id": "timeliness_065",
-                        "description": "Timeliness 0.65",
-                        "type": "Timeliness",
-                        "properties":
-                        {
-                            "timeliness":
-                            {
-                                "maximum":0.65,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "precision_08",
-                        "description": "Precision 0.8",
-                        "type": "Precision",
-                        "properties":
-                        {
-                            "precision":
-                            {
-                                "minimum":0.8,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "accuracy_09",
-                        "description": "Accuracy 0.9",
-                        "type": "Accuracy",
-                        "properties":
-                        {
-                            "accuracy":
-                            {
-                                "minimum":0.9,
-                                "unit": "none"
-                            }
-                        }
-                    }
-                ],
-                "security": [],
-                "privacy": []
-            }
-        },
-        {
-            "method_id": "GetFullDiagnostic",
-            "attributes":
-            {
-                "dataUtility":
-                [
-                    {
-                        "id": "availability_9099",
-                        "description":"Availability 90-99",
-                        "type":"Availability",
-                        "properties":
-                        {
-                            "availability":
-                            {
-                                "unit": "percentage",
-                                "minimum":90,
-                                "maximum":99
-                            }
-                        }
-                    },
-                    {
-                        "id": "processCompleteness_80",
-                        "description": "Process completeness 80",
-                        "type": "Process completeness",
-                        "properties":
-                        {
-                            "completeness":
-                            {
-                                "minimum":80,
-                                "unit": "percentage"
-                            }
-                        }
-                    },
-                    {
-                        "id": "timeliness_065",
-                        "description": "Timeliness 0.65",
-                        "type": "Timeliness",
-                        "properties":
-                        {
-                            "timeliness":
-                            {
-                                "maximum":0.65,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "precision_08",
-                        "description": "Precision 0.8",
-                        "type": "Precision",
-                        "properties":
-                        {
-                            "precision":
-                            {
-                                "minimum":0.8,
-                                "unit": "none"
-                            }
-                        }
-                    },
-                    {
-                        "id": "accuracy_09",
-                        "description": "Accuracy 0.9",
-                        "type": "Accuracy",
-                        "properties":
-                        {
-                            "accuracy":
-                            {
-                                "minimum":0.9,
-                                "unit": "none"
-                            }
-                        }
-                    }
-                ],
-                "security": [],
-                "privacy": []
-            }
-        }
-    ],
-    "ABSTRACT_PROPERTIES": [],
-    "COOKBOOK_APPENDIX": {
-
-    },
-    "EXPOSED_API": {
-        "openapi": "3.0.0",
-        "info": {
-            "title": "Computation blueprints for SPART MANUFACTURING plant (IDEKO use case)",
-            "description": "Computations blueprints able to get data from the 3 ESTARTA 315 FV machines working on the SPART MANUFATURING plant. Expose 3 methods.",
-            "version": "0.0.1"
-        },
-        "paths": {
-            "/GetStreamingData": {
-                "get": {
-                    "summary": "Returns the streaming data for the parameters given. MachinesIds can be a comma-separated list of machines.",
-                    "operationId": "GetStreamingData",
-                    "parameters": [
-                        {
-                            "in": "query",
-                            "name": "machines",
-                            "required": true,
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "OK",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/GetStreamingDataResponse"
-                                    }
-                                },
-                                "application/octet-stream": {
-                                    "schema": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                }
-                            }
-                        },
-                        "default": {
-                            "description": "Unexpected error",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ErrorResponse"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "x-data-sources": [
-                        "Streaming API"
-                    ]
-                }
-            },
-            "/GetSimplifiedDiagnostic": {
-                "get": {
-                    "summary": "Returns a simplified view of the state of the machines in the plant. A list of comma separated machine ids can be passed.",
-                    "operationId": "GetSimplifiedDiagnostic",
-                    "parameters": [
-                        {
-                            "in": "query",
-                            "name": "machines",
-                            "required": true,
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "OK",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/GetSimplifiedDiagnostic"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "x-data-sources": [
-                        "InfluxDB"
-                    ]
-                }
-            },
-            "/GetFullDiagnostic": {
-                "get": {
-                    "summary": "Returns a complete view of the states of the machines in the plant. A list of comma separated machine ids can be passed.",
-                    "operationId": "GetFullDiagnostic",
-                    "parameters": [
-                        {
-                            "in": "query",
-                            "name": "machines",
-                            "required": true,
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    ],
-                    "responses": {
-                        "200": {
-                            "description": "OK",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/GetFullDiagnostic"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "x-data-sources": [
-                        "InfluxDB"
-                    ]
-                }
-            }
-        },
-        "components": {
-            "schemas": {
-                "ErrorResponse": {
-                    "type": "object",
-                    "properties": {
-                        "status": {
-                            "type": "integer"
-                        },
-                        "code": {
-                            "type": "integer"
-                        },
-                        "message": {
-                            "type": "string"
-                        },
-                        "link": {
-                            "type": "string"
-                        },
-                        "developerMessage": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "GetStreamingDataResponse": {
-                    "type": "object",
-                    "properties": {
-                        "machine": {
-                            "type": "string"
-                        },
-                        "group": {
-                            "type": "string"
-                        },
-                        "data": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "additionalProperties": {
-                                        "type": "integer"
-                                    },
-                                    "timestamp": {
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "GetSimplifiedDiagnostic": {
-                    "type": "object",
-                    "properties": {
-                        "status": {
-                            "type": "string",
-                            "enum": [
-                                "OK",
-                                "ALERT",
-                                "WARNING"
-                            ]
-                        },
-                        "timestamp": {
-                            "type": "number",
-                            "example": 1550584972266
-                        },
-                        "cause": {
-                            "type": "object",
-                            "properties": {
-                                "raw": {
-                                    "type": "string"
-                                },
-                                "metric": {
-                                    "type": "string"
-                                },
-                                "value": {
-                                    "type": "number"
-                                },
-                                "unit": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                },
-                "GetFullDiagnostic": {
-                    "type": "object",
-                    "properties": {
-                        "status": {
-                            "type": "string",
-                            "enum": [
-                                "OK",
-                                "ALERT",
-                                "WARNING"
-                            ]
-                        },
-                        "timestamp": {
-                            "type": "number",
-                            "example": 1550584972266
-                        },
-                        "cause": {
-                            "type": "object",
-                            "properties": {
-                                "raw": {
-                                    "type": "string"
-                                },
-                                "metric": {
-                                    "type": "string"
-                                },
-                                "value": {
-                                    "type": "number"
-                                },
-                                "unit": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "signals": {
-                            "type": "object",
-                            "properties": {
-                                "additionalProperties": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "number"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        ],
+        "VDC_Images": {
+            "caf": {
+                "image": "153.92.30.56:5050/computation-vdc:latest",
+                "internal_port": 1888
             }
         }
     }

@@ -89,6 +89,7 @@ type Configuration struct {
 
 type MeterMessage struct {
 	RequestID   string `json:"request.id"`
+	BlueprintID string `json:"request.blueprintID"`
 	OperationID string `json:"request.operationID"`
 
 	Timestamp     time.Time     `json:"@timestamp"`
@@ -139,12 +140,6 @@ func initConfiguration(configuration Configuration) (Configuration, error) {
 		if !viper.IsSet("VDCID") {
 			if len(ids) >= 2 {
 				configuration.VDCID = ids[1]
-			}
-		}
-
-		if !viper.IsSet("BlueprintID") {
-			if len(ids) >= 1 {
-				configuration.BlueprintID = ids[0]
 			}
 		}
 	}
