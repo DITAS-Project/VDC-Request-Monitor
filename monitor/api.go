@@ -100,6 +100,7 @@ type MeterMessage struct {
 	RequestTime   time.Duration `json:"request.requestTime"`
 
 	ResponseCode   int   `json:"response.code,omitempty"`
+	ResponseStatus int   `json:"response.status,omitempty"`
 	ResponseLength int64 `json:"response.length,omitempty"`
 }
 

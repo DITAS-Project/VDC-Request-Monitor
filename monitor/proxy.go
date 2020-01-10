@@ -323,6 +323,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 		BlueprintID:    mon.conf.BlueprintID,
 		RequestID:      requestID,
 		ResponseCode:   resp.StatusCode,
+		ResponseStatus: resp.StatusCode,
 		ResponseLength: resp.ContentLength,
 	}
 	mon.push(requestID, meter)
@@ -357,6 +358,7 @@ func (mon *RequestMonitor) responseInterceptor(resp *http.Response) error {
 	exchange.ResponseCode = resp.StatusCode
 	exchange.ResponseLength = resp.ContentLength
 	exchange.sample = sample
+	exchange.ResponseStatus = resp.StatusCode
 
 	mon.forward(requestID, exchange)
 	return nil
